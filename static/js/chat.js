@@ -210,11 +210,48 @@ class ChatManager {
     }
 
     addBotResponse() {
-        const bot = this.bots[this.currentBot];
-        const responses = bot.responses;
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        // Show typing indicator
+        this.showTypingIndicator();
         
-        this.addMessage(randomResponse, 'bot');
+        setTimeout(() => {
+            this.hideTypingIndicator();
+            const bot = this.bots[this.currentBot];
+            const responses = bot.responses;
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            this.addMessage(randomResponse, 'bot');
+        }, 1500 + Math.random() * 1000);
+    }
+
+    showTypingIndicator() {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const bot = this.bots[this.currentBot];
+        
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `
+            <div class="message-avatar">
+                <div class="avatar-circle ${bot.class}">
+                    ${bot.avatar}
+                </div>
+            </div>
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(typingDiv);
+        this.scrollToBottom();
+    }
+
+    hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
     }
 
     getCurrentTime() {
