@@ -27,11 +27,12 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 - **Middleware**: ProxyFix for handling reverse proxy headers
 
 ## Data Storage
-- **Current Implementation**: Simplified in-memory storage for demonstration
-- **User Storage**: SimpleStorage class handling user authentication and data
+- **Current Implementation**: MongoDB Atlas cloud database with Flask-PyMongo integration
+- **User Storage**: MongoStorage class handling user authentication, profile data, and chat messages
+- **Message Persistence**: All chat conversations stored in MongoDB with PII detection results
 - **Bot Personalities**: 6 friends with natural personalities - Sarah Chen (movie lover who enjoys deep conversations), Alex Rodriguez (outdoor adventurer into hiking and photography), Maya Patel (curious person who loves hearing people's stories), David Kim (astronomy enthusiast who prefers real conversations), Elena Kowalski (multicultural foodie who traveled the world), and Ryan O'Connor (gamer and music lover who values human connections)
-- **Session Management**: Flask sessions for user state and authentication
-- **Future Enhancement**: Can be upgraded to MongoDB or PostgreSQL as needed
+- **Session Management**: Flask sessions for user state and authentication with MongoDB ObjectId user tracking
+- **Database Collections**: users (authentication & profiles), messages (chat history with PII analysis)
 
 ## Authentication & Authorization
 - **Password Security**: Werkzeug password hashing with salt

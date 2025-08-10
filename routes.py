@@ -1,11 +1,84 @@
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
-from app import app, storage
-# from models import User, Message, Story
-# from pii_detector import pii_detector
+from app import app, storage, mongo
+from pii_detector import pii_detector
 import logging
 from datetime import datetime
 import base64
+import random
+from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# Bot response generator function
+def generate_bot_response(bot_id, user_message):
+    """Generate authentic human-like responses based on bot personality"""
+    
+    # Authentic friend personalities with varied responses
+    responses = {
+        'sarah': [
+            "That's really interesting! What made you think about that?",
+            "I love hearing your perspective on things like this.",
+            "You know, that reminds me of something I was thinking about yesterday...",
+            "That's such a thoughtful way to look at it!",
+            "I've been wondering about similar things lately too.",
+            "Your insights always make me see things differently.",
+            "I really appreciate you sharing that with me.",
+            "That's fascinating - tell me more about what you're thinking!"
+        ],
+        'alex': [
+            "Wow, that sounds amazing! I can totally relate to that feeling.",
+            "That's awesome! I had a similar experience when I was hiking last weekend.",
+            "You're absolutely right about that. I love your energy!",
+            "That's so cool! Have you ever tried exploring that further?",
+            "I'm really excited to hear more about this!",
+            "That sounds like quite an adventure! I'm a bit jealous honestly.",
+            "Your enthusiasm is contagious! That sounds incredible.",
+            "I wish I could experience that too - it sounds amazing!"
+        ],
+        'maya': [
+            "Oh wow, that's such a beautiful story! Thank you for sharing.",
+            "I love hearing about your experiences - they're always so genuine.",
+            "That sounds like it was really meaningful for you.",
+            "Your stories always make me feel more connected to the world.",
+            "I'm so curious about the details - what happened next?",
+            "That's the kind of story that stays with you, isn't it?",
+            "I really appreciate you opening up about that.",
+            "Stories like yours remind me why human connections matter so much."
+        ],
+        'david': [
+            "That's a really thoughtful observation. I've been pondering similar things.",
+            "You know what's fascinating about that? It reminds me of how stars form...",
+            "That's the kind of deep thinking I really enjoy discussing.",
+            "I love conversations that make me look at things from new angles.",
+            "Your perspective is refreshing - most people don't think that deeply.",
+            "That's exactly the type of genuine conversation I value.",
+            "You always bring such depth to our talks.",
+            "It's rare to find someone who thinks about things like that."
+        ],
+        'elena': [
+            "That sounds delicious! Food has such a way of bringing people together.",
+            "Oh, that reminds me of a dish I tried in Barcelona last year!",
+            "I love how different cultures express themselves through food.",
+            "That's such a wonderful way to experience new things!",
+            "Food memories are some of my favorites - they're so vivid.",
+            "I'm getting hungry just thinking about that!",
+            "Have you ever tried making something similar at home?",
+            "Cultural exchanges like that are what make life so rich!"
+        ],
+        'ryan': [
+            "Dude, that's exactly what I've been thinking about lately!",
+            "That sounds pretty epic! I can relate to that completely.",
+            "You know what's cool about that? It reminds me of this game I played...",
+            "That's awesome - I love when people are passionate about stuff.",
+            "Honestly, that sounds way more interesting than what I did today!",
+            "I really value friends who think about things like that.",
+            "That's the kind of conversation that makes my day better.",
+            "You always have such interesting thoughts - I appreciate that about you!"
+        ]
+    }
+    
+    # Get random authentic response based on bot personality
+    bot_responses = responses.get(bot_id, responses['sarah'])
+    return random.choice(bot_responses)
 
 @app.route('/')
 def index():
@@ -36,10 +109,17 @@ def register():
         user_data = {
             'username': fullname,
             'email': email,
-            'password_hash': generate_password_hash(password)
+            'password_hash': generate_password_hash(password),
+            'created_at': datetime.utcnow(),
+            'profile': {
+                'name': fullname,
+                'avatar': 'user-default.png'
+            }
         }
         if storage.save_user(email, user_data):
-            session['user_id'] = email  # Using email as ID for simplicity
+            # Get the inserted user to get the ObjectId
+            user = storage.find_user_by_email(email)
+            session['user_id'] = str(user['_id'])
             session['username'] = fullname
             session['user'] = {'name': fullname, 'email': email}
             flash('Registration successful!', 'success')
@@ -57,7 +137,7 @@ def login():
         
         user = storage.find_user_by_email(email)
         if user and check_password_hash(user['password_hash'], password):
-            session['user_id'] = email
+            session['user_id'] = str(user['_id'])
             session['username'] = user['username']
             session['user'] = {'name': user['username'], 'email': user['email']}
             flash('Login successful!', 'success')
@@ -95,11 +175,67 @@ def chat():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # Get user's contacts (for simplicity, get all users except current user)
-    current_user_id = ObjectId(session['user_id'])
-    contacts = list(mongo.db.users.find({'_id': {'$ne': current_user_id}}, {'password_hash': 0}))
+    bot_id = request.args.get('bot_id', 'sarah')
     
-    return render_template('chat.html', contacts=contacts)
+    # Get user data
+    user_data = session.get('user', {'name': session.get('username', 'User')})
+    
+    # Bot personalities - authentic human-like friends
+    bots = {
+        'sarah': {
+            'name': 'Sarah Chen',
+            'title': 'Friend',
+            'avatar': 'sarah-chen.png',
+            'personality': 'movie_lover_deep_conversations',
+            'description': 'Loves movies and deep conversations about life'
+        },
+        'alex': {
+            'name': 'Alex Rodriguez', 
+            'title': 'Friend',
+            'avatar': 'alex-rodriguez.png',
+            'personality': 'outdoor_adventurer',
+            'description': 'Outdoor enthusiast who loves hiking and photography'
+        },
+        'maya': {
+            'name': 'Maya Patel',
+            'title': 'Friend', 
+            'avatar': 'maya-patel.png',
+            'personality': 'curious_storyteller',
+            'description': 'Curious person who loves hearing peoples stories'
+        },
+        'david': {
+            'name': 'David Kim',
+            'title': 'Friend',
+            'avatar': 'david-kim.png', 
+            'personality': 'astronomy_enthusiast',
+            'description': 'Astronomy lover who prefers real conversations'
+        },
+        'elena': {
+            'name': 'Elena Kowalski',
+            'title': 'Friend',
+            'avatar': 'elena-kowalski.png',
+            'personality': 'multicultural_foodie', 
+            'description': 'World traveler and multicultural food enthusiast'
+        },
+        'ryan': {
+            'name': 'Ryan O\'Connor',
+            'title': 'Friend',
+            'avatar': 'ryan-oconnor.png',
+            'personality': 'gamer_music_lover',
+            'description': 'Gamer and music enthusiast who values human connections'
+        }
+    }
+    
+    selected_bot = bots.get(bot_id, bots['sarah'])
+    
+    # Load previous messages from MongoDB
+    messages = storage.get_user_messages(session['user_id'], bot_id)
+    
+    return render_template('chat.html', 
+                         bot=selected_bot, 
+                         user=user_data,
+                         messages=messages,
+                         cache_bust=get_cache_bust())
 
 @app.route('/api/analyze_message', methods=['POST'])
 def analyze_message():
@@ -128,55 +264,73 @@ def send_message():
         return jsonify({'error': 'Unauthorized'}), 401
     
     data = request.json
-    recipient_id = data.get('recipient_id')
+    bot_id = data.get('bot_id', 'sarah')
     content = data.get('content')
-    use_redacted = data.get('use_redacted', False)
-    redacted_content = data.get('redacted_content')
     
-    if not recipient_id or not content:
-        return jsonify({'error': 'Missing required fields'}), 400
+    if not content:
+        return jsonify({'error': 'Missing message content'}), 400
     
     # Analyze message for PII
     analysis = pii_detector.analyze_message(content)
     
-    # Create message object
-    message = Message(
-        sender_id=session['user_id'],
-        recipient_id=recipient_id,
-        content=redacted_content if use_redacted and redacted_content else content,
-        has_pii=analysis['has_pii'],
-        redacted_content=redacted_content if analysis['has_pii'] else None
-    )
-    message.pii_detected = analysis['pii_detected']
+    # Create message document for MongoDB
+    message_data = {
+        'sender_id': session['user_id'],
+        'bot_id': bot_id,
+        'content': content,
+        'has_pii': analysis['has_pii'],
+        'pii_detected': analysis['pii_detected'],
+        'redacted_content': analysis.get('redacted_message', ''),
+        'timestamp': datetime.utcnow(),
+        'type': 'user'
+    }
     
-    if message.save():
+    # Save user message to MongoDB
+    if storage.save_message(message_data):
+        # Generate bot response based on personality
+        bot_response = generate_bot_response(bot_id, content)
+        
+        # Save bot response
+        bot_message_data = {
+            'sender_id': bot_id,
+            'bot_id': bot_id,
+            'content': bot_response,
+            'has_pii': False,
+            'pii_detected': [],
+            'timestamp': datetime.utcnow(),
+            'type': 'bot'
+        }
+        storage.save_message(bot_message_data)
+        
         return jsonify({
             'success': True,
-            'message': 'Message sent successfully',
+            'user_message': message_data,
+            'bot_response': bot_response,
             'has_pii': analysis['has_pii'],
             'pii_count': len(analysis['pii_detected'])
         })
     else:
         return jsonify({'error': 'Failed to send message'}), 500
 
-@app.route('/api/get_messages/<recipient_id>')
-def get_messages(recipient_id):
+@app.route('/api/get_messages/<bot_id>')
+def get_messages(bot_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    messages = Message.get_conversation(session['user_id'], recipient_id)
+    messages = storage.get_user_messages(session['user_id'], bot_id)
     
-    # Convert ObjectId to string and format for JSON
+    # Convert messages for JSON response
     formatted_messages = []
     for msg in messages:
         formatted_messages.append({
-            'sender_id': str(msg['sender_id']),
-            'recipient_id': str(msg['recipient_id']),
+            'sender_id': str(msg.get('sender_id', '')),
+            'bot_id': msg.get('bot_id', ''),
             'content': msg['content'],
             'has_pii': msg.get('has_pii', False),
             'pii_detected': msg.get('pii_detected', []),
-            'timestamp': msg['timestamp'].isoformat(),
-            'is_own_message': str(msg['sender_id']) == session['user_id']
+            'timestamp': msg['timestamp'].isoformat() if msg.get('timestamp') else '',
+            'type': msg.get('type', 'user'),
+            'is_own_message': msg.get('type') == 'user'
         })
     
     return jsonify({'messages': formatted_messages})
@@ -186,12 +340,17 @@ def profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    user = User.find_by_id(session['user_id'])
-    if not user:
+    try:
+        user = mongo.db.users.find_one({'_id': ObjectId(session['user_id'])}, {'password_hash': 0})
+        if not user:
+            session.clear()
+            return redirect(url_for('login'))
+        
+        return render_template('profile.html', user=user)
+    except Exception as e:
+        logging.error(f"Error loading profile: {e}")
         session.clear()
         return redirect(url_for('login'))
-    
-    return render_template('profile.html', user=user)
 
 @app.route('/api/update_profile', methods=['POST'])
 def update_profile():

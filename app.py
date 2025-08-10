@@ -1,7 +1,7 @@
 import os
 import logging
 from flask import Flask
-# Simplified approach without MongoDB for now
+from flask_pymongo import PyMongo
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure logging
@@ -12,21 +12,46 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Simplified storage for now - can be replaced with real DB later
-class SimpleStorage:
-    def __init__(self):
-        self.users = {}
-        self.messages = []
+# MongoDB Configuration
+app.config["MONGO_URI"] = os.environ.get("MONGODB_URI")
+mongo = PyMongo(app)
+
+# MongoDB storage class
+class MongoStorage:
+    def __init__(self, mongo_instance):
+        self.mongo = mongo_instance
     
     def find_user_by_email(self, email):
-        return self.users.get(email)
+        return self.mongo.db.users.find_one({"email": email})
     
     def save_user(self, email, user_data):
-        self.users[email] = user_data
-        return True
+        try:
+            result = self.mongo.db.users.insert_one(user_data)
+            return result.inserted_id is not None
+        except Exception as e:
+            logging.error(f"Error saving user: {e}")
+            return False
+    
+    def save_message(self, message_data):
+        try:
+            result = self.mongo.db.messages.insert_one(message_data)
+            return result.inserted_id is not None
+        except Exception as e:
+            logging.error(f"Error saving message: {e}")
+            return False
+    
+    def get_user_messages(self, user_id, bot_id=None, limit=50):
+        try:
+            query = {"$or": [{"sender_id": user_id}, {"recipient_id": user_id}]}
+            if bot_id:
+                query["bot_id"] = bot_id
+            return list(self.mongo.db.messages.find(query).sort("timestamp", -1).limit(limit))
+        except Exception as e:
+            logging.error(f"Error retrieving messages: {e}")
+            return []
 
-# Simple in-memory storage (for demo purposes)
-storage = SimpleStorage()
+# MongoDB storage instance
+storage = MongoStorage(mongo)
 
 # Import routes after app creation to avoid circular imports
 from routes import *
