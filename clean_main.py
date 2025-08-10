@@ -12,9 +12,29 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# Configure logging
+# Configure logging first
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Import advanced PII detector (try full version first, fallback to simple)
+ADVANCED_PII_AVAILABLE = False
+try:
+    from advanced_pii_detector import detect_pii_advanced
+    ADVANCED_PII_AVAILABLE = True
+    ADVANCED_MODE = "full"
+    logger.info("Full advanced PII detector with BERT/TF-IDF loaded successfully")
+except ImportError:
+    try:
+        from simple_advanced_pii import detect_pii_advanced_simple as detect_pii_advanced
+        ADVANCED_PII_AVAILABLE = True
+        ADVANCED_MODE = "simple"
+        logger.info("Simplified advanced PII detector with TF-IDF/clustering loaded successfully")
+    except ImportError as e:
+        logger.warning(f"Advanced PII detection not available: {e}. Using simple regex detection.")
+        ADVANCED_MODE = "none"
+except Exception as e:
+    logger.error(f"Error loading advanced PII detector: {e}")
+    ADVANCED_MODE = "none"
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-12345")
@@ -156,28 +176,52 @@ def logout():
 
 @app.route('/api/detect-pii', methods=['POST'])
 def detect_pii_api():
-    """PII Detection API endpoint"""
+    """Enhanced PII Detection API endpoint with BERT/TF-IDF"""
     try:
         data = request.get_json()
         message = data.get('message', '').strip()
+        use_advanced = data.get('use_advanced', True)
         
         if not message:
             return jsonify({'error': 'Message is required'}), 400
         
-        # Detect PII
-        pii_results = pii_detector.detect_pii(message)
+        # Use advanced detection if available
+        if ADVANCED_PII_AVAILABLE and use_advanced:
+            advanced_results = detect_pii_advanced(message)
+            
+            response = {
+                'message': message,
+                'pii_detected': advanced_results['pii_detected'],
+                'pii_items': advanced_results['pii_items'],
+                'redacted_message': advanced_results['redacted_text'],
+                'confidence_score': advanced_results['overall_confidence'],
+                'detection_methods': advanced_results['detection_methods'],
+                'advanced_detection': True,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            logger.info(f"Advanced PII Detection - Items: {len(advanced_results['pii_items'])}, "
+                       f"Confidence: {response['confidence_score']:.2f}, "
+                       f"Methods: {advanced_results['detection_methods']}")
+            
+        else:
+            # Fallback to simple detection
+            pii_results = pii_detector.detect_pii(message)
+            
+            response = {
+                'message': message,
+                'pii_detected': len(pii_results) > 0,
+                'pii_items': pii_results,
+                'redacted_message': pii_detector.redact_message(message, pii_results),
+                'confidence_score': max([item.get('confidence', 0) for item in pii_results]) if pii_results else 0,
+                'detection_methods': ['regex'],
+                'advanced_detection': False,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            logger.info(f"Simple PII Detection - Items: {len(pii_results)}, "
+                       f"Confidence: {response['confidence_score']}")
         
-        # Format response
-        response = {
-            'message': message,
-            'pii_detected': len(pii_results) > 0,
-            'pii_items': pii_results,
-            'redacted_message': pii_detector.redact_message(message, pii_results),
-            'confidence_score': max([item.get('confidence', 0) for item in pii_results]) if pii_results else 0,
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        logger.info(f"PII Detection - Items: {len(pii_results)}, Confidence: {response['confidence_score']}")
         return jsonify(response)
         
     except Exception as e:
@@ -267,9 +311,43 @@ def demo():
         </body></html>
         """
 
+@app.route('/api/pii-methods', methods=['GET'])
+def get_pii_methods():
+    """Get available PII detection methods"""
+    methods = {
+        'simple_detection': {
+            'available': True,
+            'methods': ['regex'],
+            'description': 'Pattern-based PII detection using regular expressions'
+        }
+    }
+    
+    if ADVANCED_PII_AVAILABLE:
+        if ADVANCED_MODE == "full":
+            methods['advanced_detection'] = {
+                'available': True,
+                'methods': ['regex', 'contextual', 'bert_ner', 'bert_clustering', 'tfidf_anomaly'],
+                'description': 'AI-powered PII detection using BERT embeddings, TF-IDF, and unsupervised learning'
+            }
+        else:
+            methods['advanced_detection'] = {
+                'available': True,
+                'methods': ['enhanced_regex', 'contextual_advanced', 'tfidf_clustering'],
+                'description': 'Advanced PII detection using TF-IDF vectorization and unsupervised clustering'
+            }
+    else:
+        methods['advanced_detection'] = {
+            'available': False,
+            'methods': [],
+            'description': 'Advanced detection unavailable - install transformers, torch, sentence-transformers'
+        }
+        
+    return jsonify(methods)
+
 if __name__ == '__main__':
-    logger.info("Starting Clean Telegram PII App...")
+    logger.info("Starting Advanced Telegram PII App...")
     logger.info("Demo Login: demo@example.com / demo123")
-    logger.info("No MongoDB dependencies - using in-memory storage")
+    logger.info("Features: Enhanced regex, contextual analysis, TF-IDF, unsupervised clustering")
+    logger.info(f"Advanced PII Detection: {ADVANCED_MODE.upper()} MODE {'ENABLED' if ADVANCED_PII_AVAILABLE else 'DISABLED'}")
     
     app.run(host='0.0.0.0', port=5000, debug=True)
