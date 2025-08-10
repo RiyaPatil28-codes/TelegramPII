@@ -5,7 +5,7 @@ class ChatManager {
             'ai-assistant': {
                 name: 'Sarah Chen',
                 subtitle: 'Friend',
-                avatar: '👩‍💼',
+                avatar: '/static/images/sarah-chen.png',
                 class: 'ai-avatar',
                 responses: [
                     "Hey! 😊 So good to chat with you! I just finished watching this amazing movie last night. What have you been up to lately?",
@@ -19,7 +19,7 @@ class ChatManager {
             'pii-detector': {
                 name: 'Alex Rodriguez',
                 subtitle: 'Friend',
-                avatar: '👨‍🔒',
+                avatar: '/static/images/alex-rodriguez.png',
                 class: 'security-avatar',
                 responses: [
                     "Yo! What's good? I just got back from this crazy hiking trip last weekend. The views were insane! What have you been up to?",
@@ -33,7 +33,7 @@ class ChatManager {
             'news-bot': {
                 name: 'Maya Patel',
                 subtitle: 'Friend',
-                avatar: '👩‍📺',
+                avatar: '/static/images/maya-patel.png',
                 class: 'news-avatar',
                 responses: [
                     "Hey! I just had the most interesting conversation with my neighbor about their travels. People have such amazing stories! What's new with you?",
@@ -47,7 +47,7 @@ class ChatManager {
             'weather-bot': {
                 name: 'David Kim',
                 subtitle: 'Friend',
-                avatar: '👨‍🔬',
+                avatar: '/static/images/david-kim.png',
                 class: 'weather-avatar',
                 responses: [
                     "Hey! Beautiful day today, isn't it? I just got back from a morning run and the weather was perfect. What have you been up to?",
@@ -61,7 +61,7 @@ class ChatManager {
             'translator-bot': {
                 name: 'Elena Kowalski',
                 subtitle: 'Friend',
-                avatar: '👩‍🏫',
+                avatar: '/static/images/elena-kowalski.png',
                 class: 'translator-avatar',
                 responses: [
                     "¡Hola! I just tried this amazing new restaurant that serves fusion cuisine. The flavors were incredible! What's the best food you've had lately?",
@@ -75,7 +75,7 @@ class ChatManager {
             'code-helper': {
                 name: 'Ryan O\'Connor',
                 subtitle: 'Friend',
-                avatar: '👨‍💻',
+                avatar: '/static/images/ryan-oconnor.png',
                 class: 'code-avatar',
                 responses: [
                     "What's up! Just finished playing this epic new game - totally addictive! When I'm not coding, I'm usually gaming or jamming to music. What do you do for fun?",
@@ -143,8 +143,11 @@ class ChatManager {
 
         // Update chat header
         document.getElementById('currentBotName').textContent = bot.name;
-        document.querySelector('.contact-avatar .avatar-circle').className = `avatar-circle ${bot.class}`;
-        document.querySelector('.contact-avatar .avatar-circle').innerHTML = bot.avatar;
+        const contactAvatarImg = document.querySelector('.contact-avatar .profile-pic-large');
+        if (contactAvatarImg) {
+            contactAvatarImg.src = bot.avatar;
+            contactAvatarImg.alt = bot.name;
+        }
 
         // Clear messages and load bot's intro
         this.loadBotMessages(botId);
@@ -209,9 +212,7 @@ class ChatManager {
             messageDiv.className = 'message bot-message';
             messageDiv.innerHTML = `
                 <div class="message-avatar">
-                    <div class="avatar-circle ${bot.class}">
-                        ${bot.avatar}
-                    </div>
+                    <img src="${bot.avatar}" alt="${bot.name}" class="profile-pic-chat">
                 </div>
                 <div class="message-content">
                     <div class="message-bubble">
@@ -249,9 +250,7 @@ class ChatManager {
         typingDiv.id = 'typingIndicator';
         typingDiv.innerHTML = `
             <div class="message-avatar">
-                <div class="avatar-circle ${bot.class}">
-                    ${bot.avatar}
-                </div>
+                <img src="${bot.avatar}" alt="${bot.name}" class="profile-pic-chat">
             </div>
             <div class="typing-dots">
                 <span></span>
