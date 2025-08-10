@@ -252,19 +252,12 @@ class ChatManager {
             const messageToShow = displayMessage || message;
             this.addMessage(messageToShow, 'user');
             
-            // Send to backend for comprehensive PII analysis and bot response
-            const result = await window.piiDetector.sendMessageWithPIIAnalysis(message, sendRedacted);
+            // Don't send to backend or generate bot responses - just show the user message
+            console.log('Message sent without bot response:', messageToShow);
             
-            if (result.success) {
-                // Add bot response
-                this.addMessage(result.bot_response, 'bot');
-                
-                // Show PII analysis results if any
-                if (result.pii_analysis && result.pii_analysis.has_pii) {
-                    this.showPIIAnalysisResult(result.pii_analysis);
-                }
-            } else {
-                this.addMessage('Sorry, there was an error processing your message.', 'bot');
+            // Show PII analysis results if redacted
+            if (sendRedacted) {
+                this.addSystemMessage('🔒 Message sent with PII protection enabled');
             }
         } catch (error) {
             console.error('Error processing message:', error);
