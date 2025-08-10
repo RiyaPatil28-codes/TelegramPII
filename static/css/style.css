@@ -1674,11 +1674,13 @@ a.auth-btn.secondary:hover {
 }
 
 .user-message .message-content {
-    max-width: 70%;
+    max-width: 80%;
+    min-width: 200px;
 }
 
 .bot-message .message-content {
-    max-width: 70%;
+    max-width: 80%;
+    min-width: 200px;
 }
 
 .message-avatar {
@@ -1688,14 +1690,17 @@ a.auth-btn.secondary:hover {
 .message-content {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 .message-bubble {
     padding: 12px 16px;
     border-radius: 18px;
     margin-bottom: 4px;
-    max-width: 500px;
+    max-width: none;
     word-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
 }
 
 .bot-message .message-bubble {
