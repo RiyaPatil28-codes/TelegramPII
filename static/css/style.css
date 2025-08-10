@@ -114,6 +114,234 @@ body {
     color: var(--primary-color);
 }
 
+/* Telegram Login Modal Styles */
+.telegram-login-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.telegram-login-modal {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 420px;
+    margin: 20px;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.telegram-login-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.telegram-close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.telegram-close-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.telegram-login-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #222;
+}
+
+.telegram-login-body {
+    padding: 30px;
+}
+
+.telegram-oauth-btn {
+    width: 100%;
+    background: #54A9EB;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.telegram-oauth-btn:hover {
+    background: #4A9DE8;
+}
+
+.telegram-oauth-btn i {
+    font-size: 18px;
+}
+
+.telegram-divider {
+    text-align: center;
+    margin: 25px 0;
+    position: relative;
+}
+
+.telegram-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e5e5e5;
+    z-index: 1;
+}
+
+.telegram-divider span {
+    background: white;
+    color: #999;
+    padding: 0 15px;
+    font-size: 14px;
+    position: relative;
+    z-index: 2;
+}
+
+.telegram-form-group {
+    margin-bottom: 20px;
+}
+
+.telegram-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    background: #f7f7f7;
+}
+
+.telegram-input:focus {
+    outline: none;
+    border-color: #54A9EB;
+    background: white;
+}
+
+.telegram-input::placeholder {
+    color: #999;
+}
+
+.telegram-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+}
+
+.telegram-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.telegram-checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.telegram-checkbox input[type="checkbox"]:checked + .telegram-checkmark {
+    background: #54A9EB;
+    border-color: #54A9EB;
+}
+
+.telegram-checkbox input[type="checkbox"]:checked + .telegram-checkmark::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.telegram-login-btn {
+    width: 100%;
+    background: #5B7BD5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-bottom: 20px;
+}
+
+.telegram-login-btn:hover {
+    background: #5169C7;
+}
+
+.telegram-login-footer {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.telegram-link {
+    color: #54A9EB;
+    text-decoration: none;
+}
+
+.telegram-link:hover {
+    text-decoration: underline;
+}
+
+.telegram-signup-text {
+    display: inline-block;
+    margin-top: 10px;
+}
+
 /* Chat Styles */
 .chat-container {
     height: calc(100vh - 76px);
