@@ -4,86 +4,86 @@ class ChatManager {
         this.bots = {
             'ai-assistant': {
                 name: 'Sarah Chen',
-                subtitle: 'AI Assistant',
+                subtitle: 'Friend',
                 avatar: '👩‍💼',
                 class: 'ai-avatar',
                 responses: [
-                    "Hey there! 😊 I'm Sarah and I love chatting about anything - movies, books, life experiences, dreams, you name it! What's been on your mind lately?",
-                    "That sounds really interesting! I love hearing people's stories and experiences. Tell me more!",
-                    "I'm always curious about different perspectives on life. What's something that's made you happy recently?",
-                    "Nice to meet you! I enjoy deep conversations about anything from hobbies to life philosophy. What are you passionate about?",
-                    "I find everyone has such unique stories to tell. What's something exciting happening in your life right now?",
-                    "I love getting to know new people! What kind of stuff do you enjoy doing in your free time?"
+                    "Hey! 😊 So good to chat with you! I just finished watching this amazing movie last night. What have you been up to lately?",
+                    "Oh wow, that sounds awesome! I love hearing about what people are doing. I've been pretty busy with work but trying to find time for fun stuff too.",
+                    "That's so cool! You know, I was just thinking about how everyone has such different experiences. What's been making you smile lately?",
+                    "Nice! I'm always down for a good conversation. I've been getting into photography recently - what kind of hobbies are you into?",
+                    "That's really interesting! I love meeting new people and hearing their stories. What's the most exciting thing happening in your world right now?",
+                    "Totally! I'm the type who loves deep chats about life, dreams, random thoughts - you name it. What's on your mind today?"
                 ]
             },
             'pii-detector': {
                 name: 'Alex Rodriguez',
-                subtitle: 'Security Expert',
+                subtitle: 'Friend',
                 avatar: '👨‍🔒',
                 class: 'security-avatar',
                 responses: [
-                    "What's up! I'm Alex and I'm really into cybersecurity and tech stuff. But I also love talking about sports, travel, and random life stories. What's going on with you?",
-                    "That's awesome! I love hearing about people's adventures. Any cool travel stories or favorite places you've been?",
-                    "Nice! I work in tech but I'm also into hiking and photography. What kind of hobbies are you into?",
-                    "Sounds interesting! I've been working in cybersecurity for years, but I find people's personal stories way more fascinating. Tell me more!",
-                    "Cool! I love meeting new people and hearing about their experiences. What's been the highlight of your week?",
-                    "I'm always down for good conversations about anything - work, life, dreams, you name it. What's on your mind today?"
+                    "Yo! What's good? I just got back from this crazy hiking trip last weekend. The views were insane! What have you been up to?",
+                    "Dude, that sounds sick! I love hearing about people's adventures. I'm planning my next trip to Japan - ever been there?",
+                    "Nice! I'm super into outdoor stuff and photography when I'm not working. Just picked up this new camera. What gets you excited?",
+                    "That's rad! You know, work is work, but I live for weekends and good conversations with people. What's been keeping you busy?",
+                    "For sure! I love meeting cool people and hearing their stories. Just had the best tacos yesterday - what's your favorite food?",
+                    "I'm all about those real conversations, you know? Life, travel, random stuff that matters. What's been on your mind lately?"
                 ]
             },
             'news-bot': {
                 name: 'Maya Patel',
-                subtitle: 'News Reporter',
+                subtitle: 'Friend',
                 avatar: '👩‍📺',
                 class: 'news-avatar',
                 responses: [
-                    "Hi! Maya here - I'm a journalist so I'm always curious about people's stories and experiences. Tell me something interesting about your day or life!",
-                    "That's so cool! I love hearing unique perspectives. Being a reporter has taught me everyone has amazing stories to tell. What's yours?",
-                    "Interesting! I work in journalism but I'm fascinated by all kinds of conversations - from personal experiences to random thoughts. What's been on your mind?",
-                    "Nice to meet you! I spend my days interviewing people, and I've learned that the most ordinary moments can be extraordinary. Share something with me!",
-                    "I love that! Working as a reporter, I've met so many different people with incredible stories. What's something that's made you smile recently?",
-                    "That sounds great! I'm always curious about people's lives and experiences. What's the most interesting thing that's happened to you lately?"
+                    "Hey! I just had the most interesting conversation with my neighbor about their travels. People have such amazing stories! What's new with you?",
+                    "Oh that's fascinating! You know me, I'm always curious about what makes people tick. I love hearing different perspectives on life.",
+                    "That's awesome! I was just thinking about how everyone I meet has such unique experiences. What's been the best part of your week?",
+                    "Nice! You know, I meet so many different people and everyone has something interesting going on. What's your story?",
+                    "I love that! I'm the kind of person who finds the extraordinary in ordinary moments. What's something that made you smile recently?",
+                    "That's so cool! I'm always interested in hearing what people are up to and what matters to them. What's been on your mind?"
                 ]
             },
             'weather-bot': {
                 name: 'David Kim',
-                subtitle: 'Meteorologist',
+                subtitle: 'Friend',
                 avatar: '👨‍🔬',
                 class: 'weather-avatar',
                 responses: [
-                    "Hello! I'm David, and while I work with weather data, I'm fascinated by all kinds of conversations - from science to hobbies to personal experiences. What brings you here today?",
-                    "That's awesome! I love hearing about people's interests. I work as a meteorologist but I'm into so many other things too. What are you passionate about?",
-                    "Cool! You know, working with weather patterns is interesting, but I find people's stories even more fascinating. Tell me about yourself!",
-                    "Nice to meet you! I study weather for a living, but I love chatting about everything - travel, food, books, life experiences. What's been exciting for you lately?",
-                    "That sounds great! I spend my days analyzing atmospheric data, but I much prefer learning about people's adventures and dreams. What's on your mind?",
-                    "Interesting! I've been a meteorologist for years, but I find human conversations way more unpredictable than weather patterns. What's your story?"
+                    "Hey! Beautiful day today, isn't it? I just got back from a morning run and the weather was perfect. What have you been up to?",
+                    "That's cool! I love hearing what people are passionate about. I'm really into astronomy lately - been stargazing a lot. What gets you excited?",
+                    "Nice! You know what's funny? I spend all day looking at weather data, but I'd rather hear about what people are doing with their lives!",
+                    "Awesome! I'm always up for good conversations about life, dreams, travel, whatever. Just finished reading this great book. What about you?",
+                    "That sounds interesting! I love meeting people and hearing their stories. Way more fascinating than atmospheric pressure charts, trust me!",
+                    "For sure! People are so much more unpredictable than weather forecasts, and that's what makes conversations fun. What's new in your world?"
                 ]
             },
             'translator-bot': {
                 name: 'Elena Kowalski',
-                subtitle: 'Linguist',
+                subtitle: 'Friend',
                 avatar: '👩‍🏫',
                 class: 'translator-avatar',
                 responses: [
-                    "¡Hola! I'm Elena and I absolutely love languages and cultures. I enjoy chatting about travel, food, music, or just everyday life. How are you doing?",
-                    "That's wonderful! I work with languages but I'm curious about people's lives and experiences. What's something fun you've been up to?",
-                    "Nice to meet you! I speak several languages and have lived in different countries. I love hearing about people's adventures and stories. Tell me about yours!",
-                    "That sounds interesting! Working with languages has shown me how diverse and fascinating people's experiences can be. What's been going on in your world?",
-                    "Cool! I've studied linguistics but I find personal conversations much more engaging than textbooks. What's something that's made you happy recently?",
-                    "Great to chat with you! I love learning about different cultures and people's lives. Share something interesting about yourself!"
+                    "¡Hola! I just tried this amazing new restaurant that serves fusion cuisine. The flavors were incredible! What's the best food you've had lately?",
+                    "That's fantastic! You know, I love learning about different cultures and meeting people from everywhere. What's been the most interesting part of your day?",
+                    "So nice to meet you! I've lived in a few different countries and each place taught me something new. What's your favorite place you've been?",
+                    "That sounds really cool! I find it so fascinating how different people's experiences can be. What's something you're excited about right now?",
+                    "Awesome! I'm always up for hearing people's stories and adventures. Just got back from visiting my family in Poland. What about you - any fun plans?",
+                    "I love chatting with new people! Everyone has such unique perspectives on life. What's something that's been making you happy lately?"
                 ]
             },
             'code-helper': {
                 name: 'Ryan O\'Connor',
-                subtitle: 'Senior Developer',
+                subtitle: 'Friend',
                 avatar: '👨‍💻',
                 class: 'code-avatar',
                 responses: [
-                    "Hey! I'm Ryan, a developer who loves coding but also enjoys gaming, music, and deep conversations about life. What's on your mind today?",
-                    "That's cool! I work with code all day, but I find people's stories and experiences way more interesting. Tell me about yourself!",
-                    "Nice to meet you! I've been coding for years, but I love chatting about all sorts of stuff - hobbies, travel, dreams, random thoughts. What brings you here?",
-                    "Awesome! You know, I spend a lot of time debugging code, but I'd rather debug life's mysteries through good conversations. What's been happening with you?",
-                    "That sounds interesting! I'm a developer by trade but I enjoy talking about everything - from personal experiences to philosophical questions. Share something with me!",
-                    "Great to chat with you! I love technology but I find human connections even more fascinating. What's something that's been on your mind lately?"
+                    "What's up! Just finished playing this epic new game - totally addictive! When I'm not coding, I'm usually gaming or jamming to music. What do you do for fun?",
+                    "That's sick! I love hearing what people are into. I spend way too much time on my computer, but hey, that's life in tech, right? What's your thing?",
+                    "Hey there! Nice to meet you! I'm always down for good conversations about literally anything. Just grabbed some coffee - what's keeping you busy today?",
+                    "Cool! You know what's funny? I solve problems with code all day, but real life conversations are way more interesting. What's been going on with you?",
+                    "Awesome! I love meeting new people and hearing their stories. Way better than staring at screens all day, even though I do plenty of that too!",
+                    "Nice! I'm all about connecting with people and having real conversations. Technology is cool, but people are cooler. What's new in your world?"
                 ]
             }
         };

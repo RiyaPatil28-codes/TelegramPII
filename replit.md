@@ -15,7 +15,7 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 - **Design System**: Full-screen Telegram-style interface with light theme, seamless white backgrounds, and professional messaging aesthetics
 - **Chat Interface**: Modern light-themed dashboard with light gray sidebar (#f7f7f7) containing pre-added bots, full-screen design without borders
 - **JavaScript Components**: Interactive ChatManager class for real-time bot conversations
-- **Bot System**: 6 personalized bots with human names, professional backgrounds, and unique personality-driven responses
+- **Bot System**: 6 personalized friends with natural personalities, personal interests, and genuine conversational responses that focus on building friendships rather than providing services
 - **UI Framework**: Bootstrap 5 with Font Awesome icons and custom CSS styling
 - **Cache Management**: Cache-busting parameters and no-cache headers for immediate UI updates
 
@@ -29,7 +29,7 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 ## Data Storage
 - **Current Implementation**: Simplified in-memory storage for demonstration
 - **User Storage**: SimpleStorage class handling user authentication and data
-- **Bot Personalities**: 6 named bots with detailed backgrounds - Sarah Chen (AI Assistant), Alex Rodriguez (Security Expert), Maya Patel (News Reporter), David Kim (Meteorologist), Elena Kowalski (Linguist), and Ryan O'Connor (Senior Developer)
+- **Bot Personalities**: 6 friends with natural personalities - Sarah Chen (movie lover who enjoys deep conversations), Alex Rodriguez (outdoor adventurer into hiking and photography), Maya Patel (curious person who loves hearing people's stories), David Kim (astronomy enthusiast who prefers real conversations), Elena Kowalski (multicultural foodie who traveled the world), and Ryan O'Connor (gamer and music lover who values human connections)
 - **Session Management**: Flask sessions for user state and authentication
 - **Future Enhancement**: Can be upgraded to MongoDB or PostgreSQL as needed
 
