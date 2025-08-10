@@ -11,7 +11,7 @@ import base64
 def index():
     if 'user_id' in session:
         return redirect(url_for('chat'))
-    return render_template('index.html')
+    return render_template('auth.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
