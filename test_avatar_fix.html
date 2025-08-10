@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Avatar Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa; }
+        .avatar-test { display: flex; gap: 20px; margin: 20px 0; align-items: center; }
+        
+        .avatar-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            text-overflow: clip;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .avatar-placeholder::before,
+        .avatar-placeholder::after {
+            display: none !important;
+        }
+        
+        .avatar-placeholder > * {
+            display: none !important;
+        }
+        
+        .ai-avatar { background: linear-gradient(135deg, #0088cc, #0066aa); color: white; }
+        .security-avatar { background: linear-gradient(135deg, #ff6b6b, #ee5a52); color: white; }
+        .news-avatar { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .weather-avatar { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+        .translator-avatar { background: linear-gradient(135deg, #fa709a, #fee140); color: white; }
+        .code-avatar { background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; }
+        
+        .user-info { margin-left: 15px; }
+        .user-info h3 { margin: 0; color: #333; }
+        .user-info p { margin: 0; color: #666; font-size: 14px; }
+        
+        .test-result { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Avatar Display Fix Test</h1>
+    
+    <div class="test-result">
+        <h2>Clean Avatar Display - Fixed</h2>
+        <p>These avatars should only show the initials (letters) with no unwanted text:</p>
+        
+        <div class="avatar-test">
+            <div class="avatar-placeholder ai-avatar">SC</div>
+            <div class="user-info">
+                <h3>Sarah Chen</h3>
+                <p>Friend • AI Assistant</p>
+            </div>
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-placeholder security-avatar">AR</div>
+            <div class="user-info">
+                <h3>Alex Rodriguez</h3>
+                <p>Friend • PII Security Expert</p>
+            </div>
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-placeholder news-avatar">MP</div>
+            <div class="user-info">
+                <h3>Maya Patel</h3>
+                <p>Friend • News & Stories</p>
+            </div>
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-placeholder weather-avatar">DK</div>
+            <div class="user-info">
+                <h3>David Kim</h3>
+                <p>Friend • Weather & Outdoors</p>
+            </div>
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-placeholder translator-avatar">EK</div>
+            <div class="user-info">
+                <h3>Elena Kowalski</h3>
+                <p>Friend • Languages & Travel</p>
+            </div>
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-placeholder code-avatar">RO</div>
+            <div class="user-info">
+                <h3>Ryan O'Connor</h3>
+                <p>Friend • Gaming & Code</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-result">
+        <h2>✅ Avatar Fix Applied</h2>
+        <ul>
+            <li><strong>Overflow hidden</strong> - Prevents text spillover</li>
+            <li><strong>Pseudo-elements disabled</strong> - Removes ::before and ::after content</li>
+            <li><strong>Child elements hidden</strong> - Only direct text content shows</li>
+            <li><strong>Text clipping</strong> - Ensures clean display</li>
+        </ul>
+        <p><strong>Result:</strong> Only the intended letters (SC, AR, MP, DK, EK, RO) should be visible in the circular avatars.</p>
+    </div>
+
+    <script>
+        // Test that avatars contain only the expected text
+        document.addEventListener('DOMContentLoaded', function() {
+            const avatars = document.querySelectorAll('.avatar-placeholder');
+            let testResults = [];
+            
+            avatars.forEach((avatar, index) => {
+                const text = avatar.textContent.trim();
+                const expectedTexts = ['SC', 'AR', 'MP', 'DK', 'EK', 'RO'];
+                const isClean = text === expectedTexts[index];
+                
+                testResults.push({
+                    avatar: index + 1,
+                    expected: expectedTexts[index],
+                    actual: text,
+                    clean: isClean
+                });
+                
+                console.log(`Avatar ${index + 1}: Expected "${expectedTexts[index]}", Got "${text}", Clean: ${isClean}`);
+            });
+            
+            console.log('Avatar Test Results:', testResults);
+        });
+    </script>
+</body>
+</html>

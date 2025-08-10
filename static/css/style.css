@@ -1383,11 +1383,45 @@ a.auth-btn.secondary:hover {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
 }
 
 .avatar-placeholder {
     background: #0088cc;
     color: white;
+    position: relative;
+}
+
+/* Hide any unwanted content in avatars */
+.avatar-placeholder::before,
+.avatar-placeholder::after {
+    display: none !important;
+}
+
+/* Ensure only the letter content shows */
+.avatar-placeholder > * {
+    display: none !important;
+}
+
+.avatar-placeholder {
+    text-indent: 0 !important;
+}
+
+/* Additional fixes for unwanted text */
+.avatar-placeholder img {
+    display: none !important;
+}
+
+.avatar-placeholder::before,
+.avatar-placeholder::after,
+.chat-avatar::before,
+.chat-avatar::after,
+.user-avatar::before,
+.user-avatar::after {
+    content: "" !important;
+    display: none !important;
 }
 
 .avatar-circle {
