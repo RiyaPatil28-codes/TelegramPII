@@ -95,6 +95,13 @@ class ChatManager {
         this.bindEvents();
         this.loadChatHistory();
     }
+    
+    clearAllMessages() {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messagesContainer) {
+            messagesContainer.innerHTML = '';
+        }
+    }
 
     bindEvents() {
         // Chat item selection
@@ -576,6 +583,8 @@ class ChatManager {
     }
 
     loadChatHistory() {
+        // Clear any existing messages first
+        this.clearAllMessages();
         // Initialize with AI Assistant
         this.selectChat('ai-assistant');
     }
