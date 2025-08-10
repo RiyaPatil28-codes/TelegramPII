@@ -42,7 +42,8 @@
         <div class="chat-list">
             <div class="chat-item active" data-bot-id="ai-assistant">
                 <div class="chat-avatar">
-                    <img src="/static/images/sarah-chen.png" alt="Sarah Chen" class="profile-pic">
+                    <img src="{{ url_for('static', filename='images/sarah-chen.png') }}?v={{ cache_bust }}" alt="Sarah Chen" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder ai-avatar" style="display:none;">SC</div>
                 </div>
                 <div class="chat-info">
                     <div class="chat-header">
@@ -59,7 +60,8 @@
 
             <div class="chat-item" data-bot-id="pii-detector">
                 <div class="chat-avatar">
-                    <img src="/static/images/alex-rodriguez.png" alt="Alex Rodriguez" class="profile-pic">
+                    <img src="{{ url_for('static', filename='images/alex-rodriguez.png') }}?v={{ cache_bust }}" alt="Alex Rodriguez" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder security-avatar" style="display:none;">AR</div>
                 </div>
                 <div class="chat-info">
                     <div class="chat-header">
@@ -73,7 +75,8 @@
 
             <div class="chat-item" data-bot-id="news-bot">
                 <div class="chat-avatar">
-                    <img src="/static/images/maya-patel.png" alt="Maya Patel" class="profile-pic">
+                    <img src="{{ url_for('static', filename='images/maya-patel.png') }}?v={{ cache_bust }}" alt="Maya Patel" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder news-avatar" style="display:none;">MP</div>
                 </div>
                 <div class="chat-info">
                     <div class="chat-header">
@@ -87,7 +90,8 @@
 
             <div class="chat-item" data-bot-id="weather-bot">
                 <div class="chat-avatar">
-                    <img src="/static/images/david-kim.png" alt="David Kim" class="profile-pic">
+                    <img src="{{ url_for('static', filename='images/david-kim.png') }}?v={{ cache_bust }}" alt="David Kim" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder weather-avatar" style="display:none;">DK</div>
                 </div>
                 <div class="chat-info">
                     <div class="chat-header">
@@ -101,7 +105,8 @@
 
             <div class="chat-item" data-bot-id="translator-bot">
                 <div class="chat-avatar">
-                    <img src="/static/images/elena-kowalski.png" alt="Elena Kowalski" class="profile-pic">
+                    <img src="{{ url_for('static', filename='images/elena-kowalski.png') }}?v={{ cache_bust }}" alt="Elena Kowalski" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder translator-avatar" style="display:none;">EK</div>
                 </div>
                 <div class="chat-info">
                     <div class="chat-header">
@@ -115,7 +120,8 @@
 
             <div class="chat-item" data-bot-id="code-helper">
                 <div class="chat-avatar">
-                    <img src="/static/images/ryan-oconnor.png" alt="Ryan O'Connor" class="profile-pic">
+                    <img src="{{ url_for('static', filename='images/ryan-oconnor.png') }}?v={{ cache_bust }}" alt="Ryan O'Connor" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder code-avatar" style="display:none;">RO</div>
                 </div>
                 <div class="chat-info">
                     <div class="chat-header">
@@ -134,7 +140,8 @@
         <div class="chat-header">
             <div class="chat-contact">
                 <div class="contact-avatar">
-                    <img src="/static/images/sarah-chen.png" alt="Sarah Chen" class="profile-pic-large">
+                    <img src="{{ url_for('static', filename='images/sarah-chen.png') }}?v={{ cache_bust }}" alt="Sarah Chen" class="profile-pic-large" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder ai-avatar" style="display:none;">SC</div>
                 </div>
                 <div class="contact-info">
                     <h3 id="currentBotName">Sarah Chen</h3>
@@ -159,7 +166,8 @@
         <div class="messages-container" id="messagesContainer">
             <div class="message bot-message">
                 <div class="message-avatar">
-                    <img src="/static/images/sarah-chen.png" alt="Sarah Chen" class="profile-pic-chat">
+                    <img src="{{ url_for('static', filename='images/sarah-chen.png') }}?v={{ cache_bust }}" alt="Sarah Chen" class="profile-pic-chat" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder ai-avatar" style="display:none;">SC</div>
                 </div>
                 <div class="message-content">
                     <div class="message-bubble">
