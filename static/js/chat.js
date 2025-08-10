@@ -485,12 +485,24 @@ class ChatManager {
     // Clear PII warning function
     clearPIIWarning() {
         // Clear all warning bars (in case multiple exist)
-        const existingWarnings = document.querySelectorAll('.pii-warning-bar');
-        existingWarnings.forEach(warning => warning.remove());
+        const existingWarnings = document.querySelectorAll('.pii-warning-bar, .pii-warning-container, [class*="pii-warning"], [class*="warning"]');
+        existingWarnings.forEach(warning => {
+            if (warning.textContent && warning.textContent.includes('Sensitive information detected')) {
+                warning.remove();
+            }
+        });
         
         // Clear any modal overlays
         const existingModals = document.querySelectorAll('.pii-modal-overlay');
         existingModals.forEach(modal => modal.remove());
+        
+        // Clear any elements with warning-related classes and IDs
+        const warningElements = document.querySelectorAll('[class*="warning-text"], .alert-warning, .notification, #pii-warning, [id*="pii-warning"]');
+        warningElements.forEach(element => {
+            if (element.textContent && (element.textContent.includes('Sensitive') || element.textContent.includes('undefined'))) {
+                element.remove();
+            }
+        });
         
         // Reset PII state
         if (window.piiDetector) {
@@ -498,7 +510,7 @@ class ChatManager {
             window.piiDetector.clearPIIState();
         }
         
-        console.log('PII warnings cleared');
+        console.log('PII warnings cleared - enhanced cleanup');
     }
 
     // Enhanced PII detection with proper cleanup
@@ -565,89 +577,13 @@ class ChatManager {
     // Duplicate detectPII function - remove this one
     // (keeping the enhanced version above)
 
-    analyzePII(text) {
-        const detectedTypes = [];
-        
-        // Email detection
-        const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-        if (emailRegex.test(text)) {
-            detectedTypes.push({ type: 'Email Address', icon: '📧', color: '#ff6b6b' });
-        }
+    // analyzePII function removed - using PIIDetectorFrontend.quickDetectPII instead
+    // This prevents duplicate warning systems and "undefined" type issues
 
-        // Phone number detection (various formats)
-        const phoneRegex = /(\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}|\+\d{1,3}[-.\s]?\d{1,14}/g;
-        if (phoneRegex.test(text)) {
-            detectedTypes.push({ type: 'Phone Number', icon: '📞', color: '#4ecdc4' });
-        }
+    // This function has been consolidated with the enhanced showPIIWarning above
+    // Removed to prevent duplicate warning systems
 
-        // Credit card detection
-        const creditCardRegex = /\b(?:\d{4}[-\s]?){3}\d{4}\b/g;
-        if (creditCardRegex.test(text)) {
-            detectedTypes.push({ type: 'Credit Card', icon: '💳', color: '#ffe66d' });
-        }
-
-        // Social Security Number
-        const ssnRegex = /\b\d{3}-?\d{2}-?\d{4}\b/g;
-        if (ssnRegex.test(text)) {
-            detectedTypes.push({ type: 'SSN', icon: '🆔', color: '#ff6b6b' });
-        }
-
-        // Address detection (basic)
-        const addressRegex = /\b\d+\s+([A-Za-z]+\s+){1,3}(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd)\b/gi;
-        if (addressRegex.test(text)) {
-            detectedTypes.push({ type: 'Address', icon: '🏠', color: '#a8e6cf' });
-        }
-
-        // Date of birth
-        const dobRegex = /\b(0?[1-9]|1[0-2])[\/\-](0?[1-9]|[12][0-9]|3[01])[\/\-](19|20)\d{2}\b/g;
-        if (dobRegex.test(text)) {
-            detectedTypes.push({ type: 'Date of Birth', icon: '🎂', color: '#ffb3ba' });
-        }
-
-        return detectedTypes;
-    }
-
-    showPIIWarning(detectedTypes) {
-        let warningContainer = document.getElementById('pii-warning');
-        if (!warningContainer) {
-            warningContainer = document.createElement('div');
-            warningContainer.id = 'pii-warning';
-            warningContainer.className = 'pii-warning-container';
-            
-            const inputContainer = document.querySelector('.message-input-container');
-            inputContainer.parentNode.insertBefore(warningContainer, inputContainer);
-        }
-
-        const typesHtml = detectedTypes.map(pii => 
-            `<span class="pii-badge" style="background-color: ${pii.color}20; color: ${pii.color}; border: 1px solid ${pii.color}40;">
-                ${pii.icon} ${pii.type}
-            </span>`
-        ).join('');
-
-        warningContainer.innerHTML = `
-            <div class="pii-warning-content">
-                <div class="pii-warning-header">
-                    <span class="warning-icon">⚠️</span>
-                    <span class="warning-text">Sensitive information detected:</span>
-                </div>
-                <div class="pii-types">
-                    ${typesHtml}
-                </div>
-                <div class="pii-warning-message">
-                    Be careful sharing personal information in chats
-                </div>
-            </div>
-        `;
-        
-        warningContainer.style.display = 'block';
-    }
-
-    hidePIIWarning() {
-        const warningContainer = document.getElementById('pii-warning');
-        if (warningContainer) {
-            warningContainer.style.display = 'none';
-        }
-    }
+    // hidePIIWarning function removed - consolidated into clearPIIWarning above
 }
 
 // Initialize chat when DOM is loaded
