@@ -171,12 +171,12 @@
 
         <!-- Messages Area -->
         <div class="messages-container" id="messagesContainer">
-            <div class="message bot-message" style="max-width: 45%;">
+            <div class="message bot-message" style="max-width: 400px !important; width: auto !important;">
                 <div class="message-avatar">
                     <div class="avatar-placeholder ai-avatar">SC</div>
                 </div>
-                <div class="message-content" style="max-width: 100%; width: auto;">
-                    <div class="message-bubble" style="max-width: 300px; width: auto;">
+                <div class="message-content" style="max-width: 350px !important; width: auto !important;">
+                    <div class="message-bubble" style="max-width: 320px !important; width: auto !important;">
                         <p>Hey! 😊 So good to chat with you! I just finished watching this amazing movie last night. What have you been up to lately?</p>
                     </div>
                     <div class="message-time">2:45 PM</div>
@@ -209,23 +209,23 @@
 <script>
 // Force message width changes immediately
 document.addEventListener('DOMContentLoaded', function() {
-    // Force smaller message bubbles
+    // Force smaller message bubbles with fixed pixel widths
     const messageContents = document.querySelectorAll('.message-content');
     messageContents.forEach(content => {
-        content.style.maxWidth = '45%';
-        content.style.minWidth = '120px';
+        content.style.maxWidth = '350px';
+        content.style.minWidth = '200px';
         content.style.width = 'auto';
     });
     
     const messages = document.querySelectorAll('.message');
     messages.forEach(message => {
-        message.style.maxWidth = '45%';
+        message.style.maxWidth = '400px';
         message.style.width = 'auto';
     });
     
     const bubbles = document.querySelectorAll('.message-bubble');
     bubbles.forEach(bubble => {
-        bubble.style.maxWidth = '300px';
+        bubble.style.maxWidth = '320px';
         bubble.style.width = 'auto';
     });
     
