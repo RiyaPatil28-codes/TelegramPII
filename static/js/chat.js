@@ -5,7 +5,7 @@ class ChatManager {
             'ai-assistant': {
                 name: 'Sarah Chen',
                 subtitle: 'Friend',
-                avatar: '/static/images/sarah-chen.png',
+                avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
                 class: 'ai-avatar',
                 responses: [
                     "Hey! 😊 So good to chat with you! I just finished watching this amazing movie last night. What have you been up to lately?",
@@ -19,7 +19,7 @@ class ChatManager {
             'pii-detector': {
                 name: 'Alex Rodriguez',
                 subtitle: 'Friend',
-                avatar: '/static/images/alex-rodriguez.png',
+                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
                 class: 'security-avatar',
                 responses: [
                     "Yo! What's good? I just got back from this crazy hiking trip last weekend. The views were insane! What have you been up to?",
@@ -33,7 +33,7 @@ class ChatManager {
             'news-bot': {
                 name: 'Maya Patel',
                 subtitle: 'Friend',
-                avatar: '/static/images/maya-patel.png',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
                 class: 'news-avatar',
                 responses: [
                     "Hey! I just had the most interesting conversation with my neighbor about their travels. People have such amazing stories! What's new with you?",
@@ -47,7 +47,7 @@ class ChatManager {
             'weather-bot': {
                 name: 'David Kim',
                 subtitle: 'Friend',
-                avatar: '/static/images/david-kim.png',
+                avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
                 class: 'weather-avatar',
                 responses: [
                     "Hey! Beautiful day today, isn't it? I just got back from a morning run and the weather was perfect. What have you been up to?",
@@ -61,7 +61,7 @@ class ChatManager {
             'translator-bot': {
                 name: 'Elena Kowalski',
                 subtitle: 'Friend',
-                avatar: '/static/images/elena-kowalski.png',
+                avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
                 class: 'translator-avatar',
                 responses: [
                     "¡Hola! I just tried this amazing new restaurant that serves fusion cuisine. The flavors were incredible! What's the best food you've had lately?",
@@ -75,7 +75,7 @@ class ChatManager {
             'code-helper': {
                 name: 'Ryan O\'Connor',
                 subtitle: 'Friend',
-                avatar: '/static/images/ryan-oconnor.png',
+                avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
                 class: 'code-avatar',
                 responses: [
                     "What's up! Just finished playing this epic new game - totally addictive! When I'm not coding, I'm usually gaming or jamming to music. What do you do for fun?",
@@ -149,10 +149,15 @@ class ChatManager {
 
         // Update chat header
         document.getElementById('currentBotName').textContent = bot.name;
-        const contactAvatarImg = document.querySelector('.contact-avatar .profile-pic-large');
-        if (contactAvatarImg) {
-            contactAvatarImg.src = bot.avatar;
-            contactAvatarImg.alt = bot.name;
+        
+        // Update header avatar
+        const headerAvatar = document.getElementById('currentBotAvatar');
+        const headerFallback = document.getElementById('currentBotFallback');
+        if (headerAvatar && headerFallback) {
+            headerAvatar.src = bot.avatar;
+            headerAvatar.alt = bot.name;
+            headerFallback.textContent = bot.name.split(' ').map(n => n[0]).join('');
+            headerFallback.className = `avatar-placeholder ${bot.class}`;
         }
 
         // Clear messages and load bot's intro
@@ -166,8 +171,9 @@ class ChatManager {
         messagesContainer.innerHTML = `
             <div class="message bot-message">
                 <div class="message-avatar">
-                    <div class="avatar-circle ${bot.class}">
-                        ${bot.avatar}
+                    <img src="${bot.avatar}" alt="${bot.name}" class="profile-pic-chat" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-circle ${bot.class}" style="display: none;">
+                        ${bot.name.split(' ').map(n => n[0]).join('')}
                     </div>
                 </div>
                 <div class="message-content">
@@ -310,7 +316,10 @@ class ChatManager {
             messageDiv.className = 'message bot-message';
             messageDiv.innerHTML = `
                 <div class="message-avatar">
-                    <img src="${bot.avatar}" alt="${bot.name}" class="profile-pic-chat">
+                    <img src="${bot.avatar}" alt="${bot.name}" class="profile-pic-chat" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-circle ${bot.class}" style="display: none;">
+                        ${bot.name.split(' ').map(n => n[0]).join('')}
+                    </div>
                 </div>
                 <div class="message-content">
                     <div class="message-bubble">

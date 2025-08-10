@@ -1431,8 +1431,11 @@ a.auth-btn.secondary:hover {
 }
 
 .profile-pic-chat {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .avatar-placeholder, .avatar-circle {
