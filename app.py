@@ -1,7 +1,7 @@
 import os
 import logging
 from flask import Flask
-from flask_pymongo import PyMongo
+# Simplified approach without MongoDB for now
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure logging
@@ -12,19 +12,21 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# MongoDB configuration
-mongo_uri = "mongodb+srv://riya28:2022PE0226r@cluster0.op9ayen.mongodb.net/telegram_pii?retryWrites=true&w=majority&appName=Cluster0"
-app.config["MONGO_URI"] = mongo_uri
-mongo = PyMongo(app)
+# Simplified storage for now - can be replaced with real DB later
+class SimpleStorage:
+    def __init__(self):
+        self.users = {}
+        self.messages = []
+    
+    def find_user_by_email(self, email):
+        return self.users.get(email)
+    
+    def save_user(self, email, user_data):
+        self.users[email] = user_data
+        return True
 
-# Test MongoDB connection
-try:
-    with app.app_context():
-        info = mongo.db.command('ismaster')
-        logging.info(f"MongoDB connection established successfully. Server version: {info.get('version', 'Unknown')}")
-except Exception as e:
-    logging.error(f"Failed to establish MongoDB connection: {e}")
-    # Continue anyway to let the app start
+# Simple in-memory storage (for demo purposes)
+storage = SimpleStorage()
 
 # Import routes after app creation to avoid circular imports
 from routes import *

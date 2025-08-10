@@ -1,16 +1,16 @@
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
-from app import app, mongo
-from models import User, Message, Story
-from pii_detector import pii_detector
+from app import app, storage
+# from models import User, Message, Story
+# from pii_detector import pii_detector
 import logging
-from bson import ObjectId
 from datetime import datetime
 import base64
+from werkzeug.security import generate_password_hash, check_password_hash
 
 @app.route('/')
 def index():
     if 'user_id' in session:
-        return redirect(url_for('chat'))
+        return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -27,18 +27,23 @@ def register():
             return render_template('register.html')
         
         # Check if user already exists
-        existing_user = User.find_by_email(email)
+        existing_user = storage.find_user_by_email(email)
         if existing_user:
             flash('Email already registered. Please login.', 'error')
             return render_template('register.html')
         
         # Create new user
-        user = User(username=fullname, email=email, password=password)
-        if user.save():
-            session['user_id'] = str(user._id)
+        user_data = {
+            'username': fullname,
+            'email': email,
+            'password_hash': generate_password_hash(password)
+        }
+        if storage.save_user(email, user_data):
+            session['user_id'] = email  # Using email as ID for simplicity
             session['username'] = fullname
+            session['user'] = {'name': fullname, 'email': email}
             flash('Registration successful!', 'success')
-            return redirect(url_for('chat'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Registration failed. Please try again.', 'error')
     
@@ -50,12 +55,13 @@ def login():
         email = request.form['email']
         password = request.form['password']
         
-        user = User.find_by_email(email)
-        if user and user.check_password(password):
-            session['user_id'] = str(user._id)
-            session['username'] = user.username
+        user = storage.find_user_by_email(email)
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = email
+            session['username'] = user['username']
+            session['user'] = {'name': user['username'], 'email': user['email']}
             flash('Login successful!', 'success')
-            return redirect(url_for('chat'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password.', 'error')
     
@@ -66,6 +72,19 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
+
+def get_cache_bust():
+    from datetime import datetime
+    return datetime.now().strftime('%Y%m%d-%H%M%S')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Get user data from session
+    user_data = session.get('user', {'name': session.get('username', 'User')})
+    return render_template('dashboard.html', user=user_data, cache_bust=get_cache_bust())
 
 @app.route('/chat')
 def chat():

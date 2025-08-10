@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Telegram PII{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Sidebar -->
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <img src="{{ url_for('static', filename='images/user-default.png') }}" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="avatar-placeholder" style="display:none;">{{ session.get('user', {}).get('name', 'U')[0] }}</div>
+                </div>
+                <div class="user-info">
+                    <h3>{{ session.get('user', {}).get('name', 'User') }}</h3>
+                    <span class="status">Online</span>
+                </div>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn-icon" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <a href="/logout" class="btn-icon" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search conversations..." id="searchInput">
+            </div>
+        </div>
+
+        <!-- Chat List -->
+        <div class="chat-list">
+            <div class="chat-item active" data-bot-id="ai-assistant">
+                <div class="chat-avatar">
+                    <div class="avatar-circle ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <h4>AI Assistant</h4>
+                        <span class="time">Now</span>
+                    </div>
+                    <p class="last-message">Hello! I'm here to help you with any questions.</p>
+                </div>
+                <div class="chat-status">
+                    <div class="unread-count">1</div>
+                </div>
+            </div>
+
+            <div class="chat-item" data-bot-id="pii-detector">
+                <div class="chat-avatar">
+                    <div class="avatar-circle security-avatar">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <h4>PII Detector Bot</h4>
+                        <span class="time">2:30 PM</span>
+                    </div>
+                    <p class="last-message">Send me text and I'll scan for personal information</p>
+                </div>
+            </div>
+
+            <div class="chat-item" data-bot-id="news-bot">
+                <div class="chat-avatar">
+                    <div class="avatar-circle news-avatar">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <h4>News Bot</h4>
+                        <span class="time">1:15 PM</span>
+                    </div>
+                    <p class="last-message">Here are today's top headlines...</p>
+                </div>
+            </div>
+
+            <div class="chat-item" data-bot-id="weather-bot">
+                <div class="chat-avatar">
+                    <div class="avatar-circle weather-avatar">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <h4>Weather Bot</h4>
+                        <span class="time">12:45 PM</span>
+                    </div>
+                    <p class="last-message">Today's forecast: Sunny, 24°C</p>
+                </div>
+            </div>
+
+            <div class="chat-item" data-bot-id="translator-bot">
+                <div class="chat-avatar">
+                    <div class="avatar-circle translator-avatar">
+                        <i class="fas fa-language"></i>
+                    </div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <h4>Translator Bot</h4>
+                        <span class="time">11:20 AM</span>
+                    </div>
+                    <p class="last-message">I can translate text between languages</p>
+                </div>
+            </div>
+
+            <div class="chat-item" data-bot-id="code-helper">
+                <div class="chat-avatar">
+                    <div class="avatar-circle code-avatar">
+                        <i class="fas fa-code"></i>
+                    </div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <h4>Code Helper</h4>
+                        <span class="time">10:30 AM</span>
+                    </div>
+                    <p class="last-message">Need help with coding? I'm here!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <div class="chat-header">
+            <div class="chat-contact">
+                <div class="contact-avatar">
+                    <div class="avatar-circle ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+                <div class="contact-info">
+                    <h3 id="currentBotName">AI Assistant</h3>
+                    <span class="status">Online</span>
+                </div>
+            </div>
+            <div class="chat-actions">
+                <button class="btn-icon" title="Call">
+                    <i class="fas fa-phone"></i>
+                </button>
+                <button class="btn-icon" title="Video Call">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="btn-icon" title="More">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="messages-container" id="messagesContainer">
+            <div class="message bot-message">
+                <div class="message-avatar">
+                    <div class="avatar-circle ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>Hello! I'm your AI Assistant. I can help you with various tasks, answer questions, and provide information. How can I assist you today?</p>
+                    </div>
+                    <div class="message-time">2:45 PM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="message-input-container">
+            <div class="input-actions">
+                <button class="btn-icon" title="Attach File">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <button class="btn-icon" title="Emoji">
+                    <i class="fas fa-smile"></i>
+                </button>
+            </div>
+            <div class="message-input">
+                <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+            </div>
+            <button class="send-button" id="sendButton">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}?v={{ cache_bust }}"></script>
+{% endblock %}

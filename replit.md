@@ -1,6 +1,6 @@
 # Overview
 
-This is a Flask-based web application called "Telegram PII" that provides secure messaging with advanced Personally Identifiable Information (PII) detection capabilities. The application allows users to register, login, chat with contacts, share stories, and manage their profiles while automatically detecting and protecting sensitive information in messages before they are sent.
+This is a Flask-based web application called "Telegram PII" that provides secure messaging with advanced Personally Identifiable Information (PII) detection capabilities. The application features a modern blue-themed authentication interface followed by a dark-themed chat dashboard with pre-added chatbots. Users can register, login, and interact with various specialized bots including AI Assistant, PII Detector, News Bot, Weather Bot, Translator Bot, and Code Helper.
 
 # User Preferences
 
@@ -11,10 +11,11 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 
 ## Frontend Architecture
 - **Template Engine**: Jinja2 templates with Bootstrap 5 for responsive UI
-- **Authentication Interface**: Modern two-panel layout with clean tabbed forms (auth.html)
-- **Design System**: Pure Telegram blue gradient background with modern blue color scheme throughout
-- **JavaScript Components**: Modular ES6 classes for chat management, PII detection, and stories functionality
-- **Real-time Features**: AJAX-based messaging with live PII detection as users type
+- **Authentication Interface**: Ultra-minimal single-page forms with separate login/register routes
+- **Design System**: Pure Telegram blue gradient background with dark-themed chat dashboard
+- **Chat Interface**: Modern dark-themed dashboard with sidebar containing pre-added bots
+- **JavaScript Components**: Interactive ChatManager class for real-time bot conversations
+- **Bot System**: 6 specialized bots with unique avatars and response patterns
 - **UI Framework**: Bootstrap 5 with Font Awesome icons and custom CSS styling
 - **Cache Management**: Cache-busting parameters and no-cache headers for immediate UI updates
 
@@ -26,11 +27,11 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 - **Middleware**: ProxyFix for handling reverse proxy headers
 
 ## Data Storage
-- **Primary Database**: MongoDB for storing users, messages, stories, and chat data
-- **Schema Design**: Document-based storage with embedded relationships
-- **User Model**: Handles authentication, contacts, and blocked users
-- **Message Model**: Stores chat messages with PII detection results
-- **Story Model**: Manages ephemeral content with 24-hour expiration
+- **Current Implementation**: Simplified in-memory storage for demonstration
+- **User Storage**: SimpleStorage class handling user authentication and data
+- **Bot Responses**: Pre-configured response patterns for each specialized bot
+- **Session Management**: Flask sessions for user state and authentication
+- **Future Enhancement**: Can be upgraded to MongoDB or PostgreSQL as needed
 
 ## Authentication & Authorization
 - **Password Security**: Werkzeug password hashing with salt
