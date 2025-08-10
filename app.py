@@ -13,8 +13,18 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-prod
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # MongoDB configuration
-app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/telegram_pii_db")
+mongo_uri = "mongodb+srv://riya28:2022PE0226r@cluster0.op9ayen.mongodb.net/telegram_pii?retryWrites=true&w=majority&appName=Cluster0"
+app.config["MONGO_URI"] = mongo_uri
 mongo = PyMongo(app)
+
+# Test MongoDB connection
+try:
+    with app.app_context():
+        info = mongo.db.command('ismaster')
+        logging.info(f"MongoDB connection established successfully. Server version: {info.get('version', 'Unknown')}")
+except Exception as e:
+    logging.error(f"Failed to establish MongoDB connection: {e}")
+    # Continue anyway to let the app start
 
 # Import routes after app creation to avoid circular imports
 from routes import *
