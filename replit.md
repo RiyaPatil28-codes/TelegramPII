@@ -5,15 +5,15 @@ This is a Flask-based web application called "Telegram PII" that provides secure
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
-UI Design Preferences: Ultra-minimal single-page authentication interface with modern premium styling. Clean design without promotional content or tab buttons. Each authentication form (login/register) shows on separate dedicated pages with simple navigation links. Features animated gradient backgrounds, glassmorphism effects, enhanced button animations, and modern rounded corners. No dual forms on same page - only one form visible at a time.
+UI Design Preferences: Ultra-minimal single-page authentication interface with modern premium styling. Clean design without promotional content or tab buttons. Each authentication form (login/register) shows on separate dedicated pages with simple navigation links. Features animated gradient backgrounds, glassmorphism effects, enhanced button animations, and modern rounded corners. No dual forms on same page - only one form visible at a time. Full-screen Telegram-style chat interface with seamless light theme, no white borders, and professional messaging aesthetics.
 
 # System Architecture
 
 ## Frontend Architecture
 - **Template Engine**: Jinja2 templates with Bootstrap 5 for responsive UI
 - **Authentication Interface**: Ultra-minimal single-page forms with separate login/register routes
-- **Design System**: Pure Telegram blue gradient background with dark-themed chat dashboard
-- **Chat Interface**: Modern dark-themed dashboard with sidebar containing pre-added bots
+- **Design System**: Full-screen Telegram-style interface with light theme, seamless white backgrounds, and professional messaging aesthetics
+- **Chat Interface**: Modern light-themed dashboard with light gray sidebar (#f7f7f7) containing pre-added bots, full-screen design without borders
 - **JavaScript Components**: Interactive ChatManager class for real-time bot conversations
 - **Bot System**: 6 personalized bots with human names, professional backgrounds, and unique personality-driven responses
 - **UI Framework**: Bootstrap 5 with Font Awesome icons and custom CSS styling
