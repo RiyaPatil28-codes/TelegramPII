@@ -1306,52 +1306,65 @@ a.auth-btn.secondary:hover {
 
 /* PII Warning Bar Styles */
 .pii-warning-bar {
-    background: linear-gradient(90deg, #fff3cd, #ffeaa7);
-    border: 1px solid #ffeaa7;
-    border-radius: 8px 8px 0 0;
-    padding: 12px 16px;
+    background: linear-gradient(135deg, #fff9e6, #ffecb3);
+    border: none;
+    border-radius: 12px;
+    padding: 16px 20px;
     font-size: 14px;
-    color: #856404;
+    color: #8b6914;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    animation: slideDown 0.3s ease-out;
+    justify-content: center;
+    animation: slideDown 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     z-index: 100;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
+    margin: 8px 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 193, 7, 0.2);
 }
 
 .pii-warning-bar.fade-out {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-10px) scale(0.95);
 }
 
 .pii-warning-content {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 8px;
-    flex: 1;
+    text-align: center;
 }
 
 .pii-warning-content i {
-    color: #ff6b35;
-    font-size: 16px;
+    font-size: 18px;
+    color: #f39c12;
+    margin-bottom: 4px;
+}
+
+.pii-warning-content span:first-of-type {
+    font-weight: 600;
+    color: #8b6914;
+    font-size: 15px;
 }
 
 .pii-warning-note {
-    font-style: italic;
-    opacity: 0.8;
     font-size: 12px;
+    color: #a67c00;
+    font-style: italic;
+    margin-top: 2px;
 }
 
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-15px) scale(0.95);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
