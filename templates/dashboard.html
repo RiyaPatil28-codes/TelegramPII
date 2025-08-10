@@ -171,12 +171,12 @@
 
         <!-- Messages Area -->
         <div class="messages-container" id="messagesContainer">
-            <div class="message bot-message">
+            <div class="message bot-message" style="max-width: 45%;">
                 <div class="message-avatar">
                     <div class="avatar-placeholder ai-avatar">SC</div>
                 </div>
-                <div class="message-content">
-                    <div class="message-bubble">
+                <div class="message-content" style="max-width: 100%; width: auto;">
+                    <div class="message-bubble" style="max-width: 300px; width: auto;">
                         <p>Hey! 😊 So good to chat with you! I just finished watching this amazing movie last night. What have you been up to lately?</p>
                     </div>
                     <div class="message-time">2:45 PM</div>
@@ -205,4 +205,42 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/chat.js') }}?v={{ cache_bust }}"></script>
+
+<script>
+// Force message width changes immediately
+document.addEventListener('DOMContentLoaded', function() {
+    // Force smaller message bubbles
+    const messageContents = document.querySelectorAll('.message-content');
+    messageContents.forEach(content => {
+        content.style.maxWidth = '45%';
+        content.style.minWidth = '120px';
+        content.style.width = 'auto';
+    });
+    
+    const messages = document.querySelectorAll('.message');
+    messages.forEach(message => {
+        message.style.maxWidth = '45%';
+        message.style.width = 'auto';
+    });
+    
+    const bubbles = document.querySelectorAll('.message-bubble');
+    bubbles.forEach(bubble => {
+        bubble.style.maxWidth = '300px';
+        bubble.style.width = 'auto';
+    });
+    
+    // Fix avatar clarity
+    const avatars = document.querySelectorAll('.avatar-placeholder, .avatar-circle');
+    avatars.forEach(avatar => {
+        avatar.style.fontWeight = '700';
+        avatar.style.fontSize = '18px';
+        avatar.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        avatar.style.textRendering = 'optimizeLegibility';
+        avatar.style.webkitFontSmoothing = 'antialiased';
+        avatar.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+    });
+    
+    console.log('Message sizes forced smaller');
+});
+</script>
 {% endblock %}
