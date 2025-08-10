@@ -5,7 +5,7 @@ This is a Flask-based web application called "Telegram PII" that provides secure
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
-UI Design Preferences: Ultra-minimal single-page authentication interface. Clean design without promotional content, purple styling, or tab buttons. Each authentication form (login/register) shows on separate dedicated pages with simple navigation links. No dual forms on same page - only one form visible at a time.
+UI Design Preferences: Ultra-minimal single-page authentication interface with modern premium styling. Clean design without promotional content or tab buttons. Each authentication form (login/register) shows on separate dedicated pages with simple navigation links. Features animated gradient backgrounds, glassmorphism effects, enhanced button animations, and modern rounded corners. No dual forms on same page - only one form visible at a time.
 
 # System Architecture
 
