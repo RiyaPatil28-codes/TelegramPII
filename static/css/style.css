@@ -1371,13 +1371,28 @@ a.auth-btn.secondary:hover {
 
 .user-avatar, .chat-avatar, .message-avatar, .contact-avatar {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.user-avatar img, .chat-avatar img {
+.user-avatar img, .chat-avatar img, .profile-pic, .profile-pic-large, .profile-pic-chat {
     width: 48px;
     height: 48px;
     border-radius: 50%;
     object-fit: cover;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.profile-pic-large {
+    width: 56px;
+    height: 56px;
+}
+
+.profile-pic-chat {
+    width: 40px;
+    height: 40px;
 }
 
 .avatar-placeholder, .avatar-circle {

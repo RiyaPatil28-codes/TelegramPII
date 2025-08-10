@@ -86,6 +86,10 @@ def dashboard():
     user_data = session.get('user', {'name': session.get('username', 'User')})
     return render_template('dashboard.html', user=user_data, cache_bust=get_cache_bust())
 
+@app.route('/debug')
+def debug():
+    return render_template('debug.html', cache_bust=get_cache_bust())
+
 @app.route('/chat')
 def chat():
     if 'user_id' not in session:

@@ -42,7 +42,7 @@
         <div class="chat-list">
             <div class="chat-item active" data-bot-id="ai-assistant">
                 <div class="chat-avatar">
-                    <img src="{{ url_for('static', filename='images/sarah-chen.png') }}?v={{ cache_bust }}" alt="Sarah Chen" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <img src="{{ url_for('static', filename='images/sarah-chen.png') }}?v={{ cache_bust }}" alt="Sarah Chen" class="profile-pic" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #0088cc;" onload="console.log('Sarah image loaded successfully!')" onerror="console.log('Sarah image failed to load!'); this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <div class="avatar-placeholder ai-avatar" style="display:none;">SC</div>
                 </div>
                 <div class="chat-info">
@@ -60,7 +60,7 @@
 
             <div class="chat-item" data-bot-id="pii-detector">
                 <div class="chat-avatar">
-                    <img src="{{ url_for('static', filename='images/alex-rodriguez.png') }}?v={{ cache_bust }}" alt="Alex Rodriguez" class="profile-pic" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <img src="{{ url_for('static', filename='images/alex-rodriguez.png') }}?v={{ cache_bust }}" alt="Alex Rodriguez" class="profile-pic" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ff6b6b;" onload="console.log('Alex image loaded!')" onerror="console.log('Alex image failed!'); this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <div class="avatar-placeholder security-avatar" style="display:none;">AR</div>
                 </div>
                 <div class="chat-info">
