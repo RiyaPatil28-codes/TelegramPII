@@ -176,20 +176,81 @@ class ChatManager {
         this.scrollToBottom();
     }
 
-    sendMessage() {
+    async sendMessage() {
         const messageInput = document.getElementById('messageInput');
         const message = messageInput.value.trim();
         
         if (!message) return;
-
-        // Add user message
-        this.addMessage(message, 'user');
+        
+        // Quick client-side PII detection
+        const quickPII = window.piiDetector.quickDetectPII(message);
+        
+        if (quickPII.length > 0) {
+            // Show PII confirmation dialog
+            window.piiDetector.showPIIConfirmation(message, quickPII, async (action) => {
+                if (action === 'cancel') {
+                    return; // Don't send message
+                }
+                
+                const sendRedacted = action === 'redacted';
+                await this.processSendMessage(message, sendRedacted);
+            });
+        } else {
+            // No PII detected, send normally
+            await this.processSendMessage(message, false);
+        }
+        
         messageInput.value = '';
+    }
 
-        // Simulate bot response
-        setTimeout(() => {
-            this.addBotResponse();
-        }, 1000 + Math.random() * 2000);
+    async processSendMessage(message, sendRedacted) {
+        try {
+            // Add user message to UI immediately
+            this.addMessage(message, 'user');
+            
+            // Send to backend for comprehensive PII analysis and bot response
+            const result = await window.piiDetector.sendMessageWithPIIAnalysis(message, sendRedacted);
+            
+            if (result.success) {
+                // Add bot response
+                this.addMessage(result.bot_response, 'bot');
+                
+                // Show PII analysis results if any
+                if (result.pii_analysis && result.pii_analysis.has_pii) {
+                    this.showPIIAnalysisResult(result.pii_analysis);
+                }
+            } else {
+                this.addMessage('Sorry, there was an error processing your message.', 'bot');
+            }
+        } catch (error) {
+            console.error('Error processing message:', error);
+            this.addMessage('Sorry, there was a connection error.', 'bot');
+        }
+    }
+
+    showPIIAnalysisResult(analysis) {
+        if (analysis.has_pii) {
+            const piiCount = analysis.pii_detected.length;
+            const types = analysis.pii_detected.map(p => p.type).join(', ');
+            
+            // Add a system message about PII detection
+            const systemMessage = `🔒 Analyzed message: Found ${piiCount} potential PII item(s) (${types}). Message processed securely.`;
+            this.addSystemMessage(systemMessage);
+        }
+    }
+
+    addSystemMessage(message) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const systemMessage = document.createElement('div');
+        systemMessage.className = 'system-message';
+        systemMessage.innerHTML = `
+            <div class="system-content">
+                <i class="fas fa-shield-alt"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        messagesContainer.appendChild(systemMessage);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     addMessage(text, type) {

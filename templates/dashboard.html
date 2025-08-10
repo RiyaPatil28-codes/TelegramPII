@@ -187,12 +187,14 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/pii-detector.js') }}?v={{ cache_bust }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}?v={{ cache_bust }}"></script>
 
 <script>
-// Clean chat initialization
+// Initialize chat with PII detection
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Chat interface loaded');
+    console.log('Chat interface with PII detection loaded');
+    window.chatManager = new ChatManager();
 });
 </script>
 {% endblock %}

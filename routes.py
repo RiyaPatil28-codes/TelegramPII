@@ -449,6 +449,70 @@ def get_contacts():
     
     return jsonify({'contacts': formatted_contacts})
 
+@app.route('/api/send-message', methods=['POST'])
+def api_send_message():
+    """API endpoint for sending messages with PII analysis"""
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    data = request.get_json()
+    message = data.get('message', '').strip()
+    bot_id = data.get('bot_id', 'ai-assistant')
+    send_redacted = data.get('send_redacted', False)
+    
+    if not message:
+        return jsonify({'success': False, 'error': 'Message is required'}), 400
+    
+    try:
+        # Comprehensive PII analysis using all detection methods
+        pii_analysis = pii_detector.analyze_message(message)
+        
+        # Determine final message to store
+        final_message = message
+        if send_redacted and pii_analysis['has_pii']:
+            final_message = pii_analysis['redacted_message']
+        
+        # Generate bot response
+        bot_response = generate_bot_response(bot_id, message)
+        
+        # Store messages in MongoDB
+        user_id = session.get('user_id')
+        timestamp = datetime.utcnow()
+        
+        # Store user message
+        user_message_doc = {
+            'user_id': ObjectId(user_id),
+            'bot_id': bot_id,
+            'message': final_message,
+            'original_message': message if send_redacted else final_message,
+            'message_type': 'user',
+            'pii_analysis': pii_analysis,
+            'redacted': send_redacted,
+            'timestamp': timestamp
+        }
+        mongo.db.messages.insert_one(user_message_doc)
+        
+        # Store bot response
+        bot_message_doc = {
+            'user_id': ObjectId(user_id),
+            'bot_id': bot_id,
+            'message': bot_response,
+            'message_type': 'bot',
+            'timestamp': timestamp
+        }
+        mongo.db.messages.insert_one(bot_message_doc)
+        
+        return jsonify({
+            'success': True,
+            'bot_response': bot_response,
+            'pii_analysis': pii_analysis,
+            'message_stored': final_message
+        })
+        
+    except Exception as e:
+        logging.error(f"Error processing message: {e}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404

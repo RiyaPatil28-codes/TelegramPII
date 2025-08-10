@@ -1,6 +1,6 @@
 # Overview
 
-This is a Flask-based web application called "Telegram PII" that provides secure messaging with advanced Personally Identifiable Information (PII) detection capabilities. The application features a modern blue-themed authentication interface followed by a dark-themed chat dashboard with pre-added chatbots. Users can register, login, and interact with various specialized bots including AI Assistant, PII Detector, News Bot, Weather Bot, Translator Bot, and Code Helper.
+This is a Flask-based web application called "Telegram PII" that provides secure messaging with advanced real-time Personally Identifiable Information (PII) detection capabilities. The application features a modern blue-themed authentication interface followed by a dark-themed chat dashboard with pre-added chatbots. Users can register, login, and interact with various specialized bots including AI Assistant, PII Detector, News Bot, Weather Bot, Translator Bot, and Code Helper. The system now includes comprehensive PII detection that analyzes messages before sending, with options to redact, send original, or cancel when sensitive information is detected.
 
 # User Preferences
 
@@ -41,11 +41,13 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 - **Profile Management**: User profile updates including avatar uploads
 
 ## PII Detection System
-- **NLP Processing**: spaCy English model for named entity recognition
-- **Pattern Matching**: Regex patterns for detecting emails, phone numbers, Aadhar cards, PAN cards, credit cards, and passport numbers
-- **Machine Learning**: TF-IDF vectorization with DBSCAN and KMeans clustering for advanced PII detection
-- **Real-time Analysis**: Client-side and server-side PII detection with caching
-- **Confidence Scoring**: Configurable confidence thresholds for PII detection accuracy
+- **Real-time Detection**: Pre-send message analysis that intercepts messages containing PII before transmission
+- **Pattern Matching**: Advanced regex patterns for detecting emails, phone numbers (+91 format), Aadhar cards, PAN cards, credit cards, and passport numbers
+- **NLP Processing**: spaCy English model for named entity recognition with fallback tokenization
+- **Machine Learning**: TF-IDF vectorization with DBSCAN and KMeans clustering for advanced contextual PII detection
+- **Interactive Redaction**: Modal dialog system offering three options: redact sensitive info, send original, or cancel
+- **Confidence Scoring**: Multi-level confidence thresholds (90-95%) for accurate PII detection
+- **Smart Redaction**: Contextual replacement of detected PII with appropriate placeholders ([EMAIL_REDACTED], [PHONE_REDACTED], etc.)
 
 ## Configuration Management
 - **Environment Variables**: Centralized config with development defaults
