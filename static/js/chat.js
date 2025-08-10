@@ -163,6 +163,8 @@ class ChatManager {
         if (headerAvatar && headerFallback) {
             headerAvatar.src = bot.avatar;
             headerAvatar.alt = bot.name;
+            headerAvatar.onload = function() { headerFallback.style.display = 'none'; };
+            headerAvatar.onerror = function() { this.style.display = 'none'; headerFallback.style.display = 'flex'; };
             headerFallback.textContent = bot.name.split(' ').map(n => n[0]).join('');
             headerFallback.className = `avatar-placeholder ${bot.class}`;
         }
