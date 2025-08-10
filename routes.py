@@ -11,14 +11,20 @@ import base64
 def index():
     if 'user_id' in session:
         return redirect(url_for('chat'))
-    return render_template('auth.html')
+    return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        fullname = request.form['fullname']
         email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        # Validate password confirmation
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('register.html')
         
         # Check if user already exists
         existing_user = User.find_by_email(email)
@@ -27,10 +33,10 @@ def register():
             return render_template('register.html')
         
         # Create new user
-        user = User(username=username, email=email, password=password)
+        user = User(username=fullname, email=email, password=password)
         if user.save():
             session['user_id'] = str(user._id)
-            session['username'] = username
+            session['username'] = fullname
             flash('Registration successful!', 'success')
             return redirect(url_for('chat'))
         else:

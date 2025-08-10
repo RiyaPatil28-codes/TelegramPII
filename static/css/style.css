@@ -1222,6 +1222,18 @@ body {
     border-color: var(--primary-color);
 }
 
+/* Link-style secondary button for navigation */
+a.auth-btn.secondary {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+a.auth-btn.secondary:hover {
+    text-decoration: none;
+}
+
 .auth-divider {
     text-align: center;
     margin: 20px 0;
