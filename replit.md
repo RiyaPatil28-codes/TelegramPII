@@ -5,14 +5,18 @@ This is a Flask-based web application called "Telegram PII" that provides secure
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+UI Design Preferences: Clean, minimal interface without promotional content or purple styling. Remove "Continue with Telegram" buttons and feature showcase cards.
 
 # System Architecture
 
 ## Frontend Architecture
 - **Template Engine**: Jinja2 templates with Bootstrap 5 for responsive UI
+- **Authentication Interface**: Modern two-panel layout with clean tabbed forms (auth.html)
+- **Design System**: Pure Telegram blue gradient background without purple elements
 - **JavaScript Components**: Modular ES6 classes for chat management, PII detection, and stories functionality
 - **Real-time Features**: AJAX-based messaging with live PII detection as users type
 - **UI Framework**: Bootstrap 5 with Font Awesome icons and custom CSS styling
+- **Cache Management**: Cache-busting parameters and no-cache headers for immediate UI updates
 
 ## Backend Architecture
 - **Web Framework**: Flask with PyMongo for MongoDB integration
