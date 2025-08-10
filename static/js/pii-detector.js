@@ -62,17 +62,42 @@ class PIIDetectorFrontend {
         return detected;
     }
 
-    // Show PII confirmation dialog
+    // Generate redacted preview
+    generateRedactedPreview(message, detectedPII) {
+        let redactedMessage = message;
+        const replacements = {
+            'email': '[EMAIL_REDACTED]',
+            'phone': '[PHONE_REDACTED]',
+            'aadhar': '[AADHAR_REDACTED]',
+            'passport': '[PASSPORT_REDACTED]',
+            'creditCard': '[CARD_REDACTED]',
+            'pan': '[PAN_REDACTED]',
+            'name': '[NAME_REDACTED]'
+        };
+
+        detectedPII.forEach(pii => {
+            const replacement = `<span class="redacted-text">${replacements[pii.type] || '[REDACTED]'}</span>`;
+            redactedMessage = redactedMessage.replace(new RegExp(pii.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replacement);
+        });
+
+        return redactedMessage;
+    }
+
+    // Show PII confirmation dialog with enhanced UI
     showPIIConfirmation(message, detectedPII, callback) {
+        const redactedPreview = this.generateRedactedPreview(message, detectedPII);
+        let selectedRedaction = 'placeholder'; // Default redaction method
+        
         const modal = document.createElement('div');
         modal.className = 'pii-modal-overlay';
         modal.innerHTML = `
             <div class="pii-modal">
                 <div class="pii-modal-header">
-                    <h3>🔒 PII Detected</h3>
-                    <p>We found potentially sensitive information in your message:</p>
+                    <h3>PII Detected</h3>
+                    <p>We found potentially sensitive information in your message. Choose how to proceed:</p>
                 </div>
                 <div class="pii-detected-list">
+                    <h4 class="pii-section-title">Detected Sensitive Information:</h4>
                     ${detectedPII.map(pii => `
                         <div class="pii-item">
                             <span class="pii-type">${this.formatPIIType(pii.type)}</span>
@@ -80,9 +105,37 @@ class PIIDetectorFrontend {
                         </div>
                     `).join('')}
                 </div>
+                <div class="pii-redaction-options">
+                    <h4>Redaction Options:</h4>
+                    <label class="redaction-choice selected" data-method="placeholder">
+                        <input type="radio" name="redaction" value="placeholder" checked>
+                        <div class="redaction-label">
+                            <div class="redaction-title">Replace with Placeholders</div>
+                            <div class="redaction-description">Replace sensitive data with [EMAIL_REDACTED], [PHONE_REDACTED], etc.</div>
+                        </div>
+                    </label>
+                    <label class="redaction-choice" data-method="mask">
+                        <input type="radio" name="redaction" value="mask">
+                        <div class="redaction-label">
+                            <div class="redaction-title">Mask with Symbols</div>
+                            <div class="redaction-description">Replace with *** or #### while keeping format (john@***.com)</div>
+                        </div>
+                    </label>
+                    <label class="redaction-choice" data-method="remove">
+                        <input type="radio" name="redaction" value="remove">
+                        <div class="redaction-label">
+                            <div class="redaction-title">Remove Completely</div>
+                            <div class="redaction-description">Remove sensitive information entirely from the message</div>
+                        </div>
+                    </label>
+                </div>
                 <div class="pii-message-preview">
-                    <h4>Your message:</h4>
-                    <div class="message-preview">${message}</div>
+                    <div class="pii-preview-tabs">
+                        <button class="pii-tab active" data-tab="original">Original</button>
+                        <button class="pii-tab" data-tab="redacted">Redacted Preview</button>
+                    </div>
+                    <div class="message-preview" id="originalPreview">${message}</div>
+                    <div class="message-preview redacted" id="redactedPreview" style="display: none;">${redactedPreview}</div>
                 </div>
                 <div class="pii-modal-actions">
                     <button class="btn-pii-send-redacted">
@@ -91,7 +144,7 @@ class PIIDetectorFrontend {
                     </button>
                     <button class="btn-pii-send-original">
                         <i class="fas fa-paper-plane"></i>
-                        Send Original Message
+                        Send Original
                     </button>
                     <button class="btn-pii-cancel">
                         <i class="fas fa-times"></i>
@@ -103,10 +156,44 @@ class PIIDetectorFrontend {
 
         document.body.appendChild(modal);
 
+        // Handle tab switching
+        const tabs = modal.querySelectorAll('.pii-tab');
+        const originalPreview = modal.querySelector('#originalPreview');
+        const redactedPreview = modal.querySelector('#redactedPreview');
+        
+        tabs.forEach(tab => {
+            tab.onclick = () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                if (tab.dataset.tab === 'original') {
+                    originalPreview.style.display = 'block';
+                    redactedPreview.style.display = 'none';
+                } else {
+                    originalPreview.style.display = 'none';
+                    redactedPreview.style.display = 'block';
+                }
+            };
+        });
+
+        // Handle redaction option changes
+        const redactionChoices = modal.querySelectorAll('.redaction-choice');
+        redactionChoices.forEach(choice => {
+            choice.onclick = () => {
+                redactionChoices.forEach(c => c.classList.remove('selected'));
+                choice.classList.add('selected');
+                choice.querySelector('input').checked = true;
+                selectedRedaction = choice.dataset.method;
+                
+                // Update preview based on selection
+                this.updateRedactedPreview(message, detectedPII, selectedRedaction, redactedPreview);
+            };
+        });
+
         // Handle button clicks
         modal.querySelector('.btn-pii-send-redacted').onclick = () => {
             document.body.removeChild(modal);
-            callback('redacted');
+            callback('redacted', selectedRedaction);
         };
 
         modal.querySelector('.btn-pii-send-original').onclick = () => {
@@ -126,6 +213,48 @@ class PIIDetectorFrontend {
                 callback('cancel');
             }
         };
+    }
+
+    // Update redacted preview based on selected method
+    updateRedactedPreview(message, detectedPII, method, previewElement) {
+        let redactedMessage = message;
+        
+        const replacements = {
+            'placeholder': {
+                'email': '[EMAIL_REDACTED]',
+                'phone': '[PHONE_REDACTED]',
+                'aadhar': '[AADHAR_REDACTED]',
+                'passport': '[PASSPORT_REDACTED]',
+                'creditCard': '[CARD_REDACTED]',
+                'pan': '[PAN_REDACTED]',
+                'name': '[NAME_REDACTED]'
+            },
+            'mask': {
+                'email': (value) => value.replace(/(.{2})(.*)(@.{2})(.*)/, '$1***$3***'),
+                'phone': (value) => value.replace(/(\d{3})(\d*)(\d{3})/, '$1****$3'),
+                'aadhar': (value) => value.replace(/(\d{4})(.*)(\d{4})/, '$1-****-$3'),
+                'passport': (value) => value.replace(/([A-Z]{1})(.*)/, '$1*******'),
+                'creditCard': (value) => value.replace(/(\d{4})(.*)(\d{4})/, '$1-****-****-$3'),
+                'pan': (value) => value.replace(/([A-Z]{3})(.*)([A-Z]{1})/, '$1**$4**$3'),
+                'name': (value) => value.replace(/(\w+)\s+(\w+)/, '$1 ***')
+            },
+            'remove': ''
+        };
+
+        detectedPII.forEach(pii => {
+            let replacement;
+            if (method === 'mask' && typeof replacements[method][pii.type] === 'function') {
+                replacement = `<span class="redacted-text">${replacements[method][pii.type](pii.value)}</span>`;
+            } else if (method === 'placeholder') {
+                replacement = `<span class="redacted-text">${replacements[method][pii.type] || '[REDACTED]'}</span>`;
+            } else if (method === 'remove') {
+                replacement = '';
+            }
+            
+            redactedMessage = redactedMessage.replace(new RegExp(pii.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replacement);
+        });
+
+        previewElement.innerHTML = redactedMessage;
     }
 
     formatPIIType(type) {
