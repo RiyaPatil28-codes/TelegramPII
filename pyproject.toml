@@ -15,6 +15,5 @@ dependencies = [
     "scikit-learn>=1.7.1",
     "openai>=1.99.6",
     "nltk>=3.9.1",
-    "pymongo>=4.14.0",
     "flask-pymongo>=3.0.1",
 ]

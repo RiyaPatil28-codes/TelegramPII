@@ -1,4 +1,5 @@
-from app import app
+# Use clean app without MongoDB dependencies
+from clean_main import app
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
