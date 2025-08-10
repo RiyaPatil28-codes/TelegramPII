@@ -1800,14 +1800,20 @@ a.auth-btn.secondary:hover {
 }
 
 .user-message {
-    justify-content: flex-end;
-    flex-direction: row-reverse;
-    margin-left: auto;
+    justify-content: flex-end !important;
+    flex-direction: row-reverse !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    align-self: flex-end !important;
 }
 
 .user-message .message-content {
     max-width: 500px;
-    align-items: flex-end;
+    align-items: flex-end !important;
+    margin-left: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    text-align: right !important;
 }
 
 .bot-message .message-content {
@@ -1860,11 +1866,13 @@ a.auth-btn.secondary:hover {
 }
 
 .user-message .message-bubble {
-    background: #ffffff;
+    background: #0084ff !important;
     border-bottom-right-radius: 4px;
-    color: #000000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 132, 255, 0.3);
     position: relative;
+    margin-left: auto !important;
+    float: right !important;
 }
 
 .message-bubble p {
@@ -1886,8 +1894,10 @@ a.auth-btn.secondary:hover {
 }
 
 .user-message .message-time {
-    text-align: right;
-    justify-content: flex-end;
+    text-align: right !important;
+    justify-content: flex-end !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    margin-left: auto !important;
 }
 
 .user-message .message-time::after {
