@@ -159,7 +159,7 @@ class PIIDetectorFrontend {
         // Handle tab switching
         const tabs = modal.querySelectorAll('.pii-tab');
         const originalPreview = modal.querySelector('#originalPreview');
-        const redactedPreview = modal.querySelector('#redactedPreview');
+        const redactedPreviewElement = modal.querySelector('#redactedPreview');
         
         tabs.forEach(tab => {
             tab.onclick = () => {
@@ -168,10 +168,10 @@ class PIIDetectorFrontend {
                 
                 if (tab.dataset.tab === 'original') {
                     originalPreview.style.display = 'block';
-                    redactedPreview.style.display = 'none';
+                    redactedPreviewElement.style.display = 'none';
                 } else {
                     originalPreview.style.display = 'none';
-                    redactedPreview.style.display = 'block';
+                    redactedPreviewElement.style.display = 'block';
                 }
             };
         });
@@ -186,7 +186,7 @@ class PIIDetectorFrontend {
                 selectedRedaction = choice.dataset.method;
                 
                 // Update preview based on selection
-                this.updateRedactedPreview(message, detectedPII, selectedRedaction, redactedPreview);
+                this.updateRedactedPreview(message, detectedPII, selectedRedaction, redactedPreviewElement);
             };
         });
 

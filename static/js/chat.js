@@ -199,14 +199,14 @@ class ChatManager {
         
         if (quickPII.length > 0) {
             // Show PII confirmation dialog - DON'T clear input yet
-            window.piiDetector.showPIIConfirmation(message, quickPII, async (action) => {
+            window.piiDetector.showPIIConfirmation(message, quickPII, async (action, redactionMethod) => {
                 if (action === 'cancel') {
                     console.log('User cancelled PII send');
                     return; // Don't send message, keep text in input
                 }
                 
                 const sendRedacted = action === 'redacted';
-                console.log('Sending with PII action:', action);
+                console.log('Sending with PII action:', action, 'method:', redactionMethod);
                 
                 // If redacted, create redacted message to display
                 let messageToDisplay = message;
@@ -222,14 +222,9 @@ class ChatManager {
                 
                 await this.processSendMessage(messageToSend, sendRedacted, messageToDisplay);
                 
-                // Only clear input AFTER successful send
+                // Clear input and warnings after successful send
                 messageInput.value = '';
                 this.clearPIIWarning();
-                
-                // Force clear any remaining warning bars
-                setTimeout(() => {
-                    this.clearPIIWarning();
-                }, 100);
             });
         } else {
             // No PII detected, send normally
@@ -239,18 +234,19 @@ class ChatManager {
             // Clear input and PII warnings after send
             messageInput.value = '';
             this.clearPIIWarning();
-            
-            // Force clear any remaining warning bars
-            setTimeout(() => {
-                this.clearPIIWarning();
-            }, 100);
         }
     }
 
     async processSendMessage(message, sendRedacted, displayMessage = null) {
         try {
-            // Clear PII warnings immediately when message processing starts
+            // Clear PII warnings and input immediately when message processing starts
             this.clearPIIWarning();
+            
+            // Force clear input to prevent modal from reopening
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.value = '';
+            }
             
             // Add user message to UI (use display message if provided for redacted content)
             const messageToShow = displayMessage || message;
@@ -509,20 +505,8 @@ class ChatManager {
         this.selectChat('ai-assistant');
     }
 
-    // Real-time PII Detection
-    detectPII(text) {
-        if (!text.trim()) {
-            this.hidePIIWarning();
-            return;
-        }
-
-        const detectedPII = this.analyzePII(text);
-        if (detectedPII.length > 0) {
-            this.showPIIWarning(detectedPII);
-        } else {
-            this.hidePIIWarning();
-        }
-    }
+    // Duplicate detectPII function - remove this one
+    // (keeping the enhanced version above)
 
     analyzePII(text) {
         const detectedTypes = [];
