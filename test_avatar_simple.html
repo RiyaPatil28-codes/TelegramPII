@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Avatar Test</title>
+    <style>
+        .test-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+        .avatar-test {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+        .avatar-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+        .avatar-fallback {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #0088cc;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <h2>Profile Picture Test</h2>
+    <div class="test-container">
+        <div class="avatar-test">
+            <div class="avatar-fallback">SC</div>
+            <img class="avatar-img" 
+                 src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face&auto=format&q=80" 
+                 alt="Sarah Chen"
+                 onload="console.log('Sarah image loaded successfully')" 
+                 onerror="console.log('Sarah image failed to load'); this.style.display='none';">
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-fallback">AR</div>
+            <img class="avatar-img" 
+                 src="https://randomuser.me/api/portraits/men/32.jpg" 
+                 alt="Alex Rodriguez"
+                 onload="console.log('Alex image loaded successfully')" 
+                 onerror="console.log('Alex image failed to load'); this.style.display='none';">
+        </div>
+        
+        <div class="avatar-test">
+            <div class="avatar-fallback">MP</div>
+            <img class="avatar-img" 
+                 src="https://randomuser.me/api/portraits/women/44.jpg" 
+                 alt="Maya Patel"
+                 onload="console.log('Maya image loaded successfully')" 
+                 onerror="console.log('Maya image failed to load'); this.style.display='none';">
+        </div>
+    </div>
+    
+    <script>
+        console.log('Avatar test page loaded');
+    </script>
+</body>
+</html>
