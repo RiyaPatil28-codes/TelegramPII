@@ -122,28 +122,51 @@
 
 <script>
 function showLogin() {
-    document.getElementById('login-form').classList.add('active');
-    document.getElementById('register-form').classList.remove('active');
-    document.querySelectorAll('.auth-tab')[0].classList.add('active');
-    document.querySelectorAll('.auth-tab')[1].classList.remove('active');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    
+    if (loginForm && registerForm) {
+        loginForm.classList.add('active');
+        registerForm.classList.remove('active');
+        
+        // Scroll to top smoothly
+        document.querySelector('.auth-form-side').scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
 }
 
 function showRegister() {
-    document.getElementById('register-form').classList.add('active');
-    document.getElementById('login-form').classList.remove('active');
-    document.querySelectorAll('.auth-tab')[1].classList.add('active');
-    document.querySelectorAll('.auth-tab')[0].classList.remove('active');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    
+    if (loginForm && registerForm) {
+        registerForm.classList.add('active');
+        loginForm.classList.remove('active');
+        
+        // Scroll to top smoothly
+        document.querySelector('.auth-form-side').scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
 }
 
 // Password confirmation validation
-document.getElementById('register-confirm').addEventListener('input', function() {
-    const password = document.getElementById('register-password').value;
-    const confirm = this.value;
-    
-    if (password !== confirm) {
-        this.setCustomValidity('Passwords do not match');
-    } else {
-        this.setCustomValidity('');
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmField = document.getElementById('register-confirm');
+    if (confirmField) {
+        confirmField.addEventListener('input', function() {
+            const password = document.getElementById('register-password').value;
+            const confirm = this.value;
+            
+            if (password !== confirm) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
     }
 });
 </script>

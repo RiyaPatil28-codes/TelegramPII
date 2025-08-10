@@ -961,7 +961,7 @@ html, body {
     justify-content: center;
     padding: 20px;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .auth-container::before {
@@ -1111,6 +1111,8 @@ html, body {
     flex-direction: column;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
+    overflow-y: auto;
+    max-height: 700px;
 }
 
 .auth-tabs {
@@ -1140,8 +1142,6 @@ html, body {
 
 .auth-form {
     display: none;
-    flex: 1;
-    display: flex;
     flex-direction: column;
 }
 
