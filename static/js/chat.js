@@ -225,6 +225,11 @@ class ChatManager {
                 // Only clear input AFTER successful send
                 messageInput.value = '';
                 this.clearPIIWarning();
+                
+                // Force clear any remaining warning bars
+                setTimeout(() => {
+                    this.clearPIIWarning();
+                }, 100);
             });
         } else {
             // No PII detected, send normally
@@ -234,11 +239,19 @@ class ChatManager {
             // Clear input and PII warnings after send
             messageInput.value = '';
             this.clearPIIWarning();
+            
+            // Force clear any remaining warning bars
+            setTimeout(() => {
+                this.clearPIIWarning();
+            }, 100);
         }
     }
 
     async processSendMessage(message, sendRedacted, displayMessage = null) {
         try {
+            // Clear PII warnings immediately when message processing starts
+            this.clearPIIWarning();
+            
             // Add user message to UI (use display message if provided for redacted content)
             const messageToShow = displayMessage || message;
             this.addMessage(messageToShow, 'user');
@@ -418,21 +431,21 @@ class ChatManager {
 
     // Clear PII warning function
     clearPIIWarning() {
-        const existingWarning = document.querySelector('.pii-warning-bar');
-        if (existingWarning) {
-            existingWarning.remove();
-        }
+        // Clear all warning bars (in case multiple exist)
+        const existingWarnings = document.querySelectorAll('.pii-warning-bar');
+        existingWarnings.forEach(warning => warning.remove());
         
         // Clear any modal overlays
-        const existingModal = document.querySelector('.pii-modal-overlay');
-        if (existingModal) {
-            existingModal.remove();
-        }
+        const existingModals = document.querySelectorAll('.pii-modal-overlay');
+        existingModals.forEach(modal => modal.remove());
         
         // Reset PII state
         if (window.piiDetector) {
             window.piiDetector.currentPIIDetected = [];
+            window.piiDetector.clearPIIState();
         }
+        
+        console.log('PII warnings cleared');
     }
 
     // Enhanced PII detection with proper cleanup
@@ -457,6 +470,8 @@ class ChatManager {
         this.clearPIIWarning(); // Remove any existing warning
         
         const inputArea = document.querySelector('.message-input-container');
+        if (!inputArea) return;
+        
         const warningBar = document.createElement('div');
         warningBar.className = 'pii-warning-bar';
         warningBar.innerHTML = `
@@ -468,6 +483,9 @@ class ChatManager {
         `;
         
         inputArea.insertBefore(warningBar, inputArea.firstChild);
+        
+        // Auto-hide warning after message is processed
+        warningBar.setAttribute('data-warning-id', Date.now().toString());
     }
 
     filterChats(searchTerm) {

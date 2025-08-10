@@ -1316,6 +1316,14 @@ a.auth-btn.secondary:hover {
     align-items: center;
     justify-content: space-between;
     animation: slideDown 0.3s ease-out;
+    position: relative;
+    z-index: 100;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.pii-warning-bar.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 .pii-warning-content {
