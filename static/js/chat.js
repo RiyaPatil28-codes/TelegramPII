@@ -168,6 +168,10 @@ class ChatManager {
         const messagesContainer = document.getElementById('messagesContainer');
         const bot = this.bots[botId];
         
+        // Clear all messages first
+        messagesContainer.innerHTML = '';
+        
+        // Add fresh welcome message
         messagesContainer.innerHTML = `
             <div class="message bot-message">
                 <div class="message-avatar">
