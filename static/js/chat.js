@@ -207,7 +207,20 @@ class ChatManager {
                 
                 const sendRedacted = action === 'redacted';
                 console.log('Sending with PII action:', action);
-                await this.processSendMessage(message, sendRedacted);
+                
+                // If redacted, create redacted message to display
+                let messageToDisplay = message;
+                let messageToSend = message;
+                
+                if (sendRedacted) {
+                    // Generate redacted version for display
+                    const redactedMessage = this.redactMessage(message, quickPII);
+                    messageToDisplay = redactedMessage;
+                    messageToSend = redactedMessage;
+                    console.log('Redacted message:', redactedMessage);
+                }
+                
+                await this.processSendMessage(messageToSend, sendRedacted, messageToDisplay);
                 
                 // Only clear input AFTER successful send
                 messageInput.value = '';
@@ -224,10 +237,11 @@ class ChatManager {
         }
     }
 
-    async processSendMessage(message, sendRedacted) {
+    async processSendMessage(message, sendRedacted, displayMessage = null) {
         try {
-            // Add user message to UI immediately
-            this.addMessage(message, 'user');
+            // Add user message to UI (use display message if provided for redacted content)
+            const messageToShow = displayMessage || message;
+            this.addMessage(messageToShow, 'user');
             
             // Send to backend for comprehensive PII analysis and bot response
             const result = await window.piiDetector.sendMessageWithPIIAnalysis(message, sendRedacted);
@@ -366,6 +380,40 @@ class ChatManager {
     scrollToBottom() {
         const messagesContainer = document.getElementById('messagesContainer');
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Redact message function
+    redactMessage(message, piiItems) {
+        let redacted = message;
+        
+        // Sort PII items by length (longest first) to avoid partial replacements
+        const sortedPII = piiItems.sort((a, b) => b.value.length - a.value.length);
+        
+        for (const pii of sortedPII) {
+            const placeholder = this.getPIIPlaceholder(pii.type);
+            redacted = redacted.replace(new RegExp(this.escapeRegex(pii.value), 'g'), placeholder);
+        }
+        
+        return redacted;
+    }
+    
+    // Get appropriate placeholder for PII type
+    getPIIPlaceholder(type) {
+        const placeholders = {
+            'email': '[EMAIL_REDACTED]',
+            'phone': '[PHONE_REDACTED]',
+            'aadhar': '[AADHAR_REDACTED]',
+            'passport': '[PASSPORT_REDACTED]',
+            'creditCard': '[CARD_REDACTED]',
+            'pan': '[PAN_REDACTED]',
+            'name': '[NAME_REDACTED]'
+        };
+        return placeholders[type] || '[REDACTED]';
+    }
+    
+    // Escape regex special characters
+    escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     // Clear PII warning function

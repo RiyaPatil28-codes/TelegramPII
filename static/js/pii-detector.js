@@ -3,7 +3,7 @@ class PIIDetectorFrontend {
         this.piiPatterns = {
             email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
             phone: /(\+91[\-\s]?)?[0]?(91)?[789]\d{9}/g,
-            aadhar: /\b\d{4}\s?\d{4}\s?\d{4}\b/g,
+            aadhar: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
             passport: /\b[A-Z]{1}[0-9]{7}\b/g,
             creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
             pan: /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/g
