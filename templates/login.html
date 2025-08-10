@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Telegram PII{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5 col-md-7">
+        <div class="auth-card">
+            <div class="text-center mb-4">
+                <i class="fab fa-telegram-plane auth-icon"></i>
+                <h2 class="mt-3">Welcome Back</h2>
+                <p class="text-muted">Sign in to your account</p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="remember">
+                        <label class="form-check-label" for="remember">
+                            Remember me
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mb-3">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+
+            <div class="text-center">
+                <p class="mb-0">Don't have an account? 
+                    <a href="{{ url_for('register') }}" class="text-primary">Sign up here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

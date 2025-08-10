@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Telegram PII{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="profile-container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture }}" alt="Profile Picture" id="profile-image">
+                        {% else %}
+                            <i class="fas fa-user-circle" id="default-avatar"></i>
+                        {% endif %}
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="document.getElementById('profile-picture-input').click()">
+                        <i class="fas fa-camera"></i> Change Photo
+                    </button>
+                    <input type="file" id="profile-picture-input" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="profile-info">
+                    <h2>{{ user.username }}</h2>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <p class="profile-stats">
+                        <span class="me-3">
+                            <i class="fas fa-comments"></i> 0 Messages
+                        </span>
+                        <span class="me-3">
+                            <i class="fas fa-users"></i> {{ contacts|length if contacts else 0 }} Contacts
+                        </span>
+                        <span>
+                            <i class="fas fa-calendar"></i> Joined {{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Profile Tabs -->
+            <div class="profile-tabs">
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="privacy-tab" data-bs-toggle="tab" data-bs-target="#privacy" type="button">
+                            <i class="fas fa-shield-alt"></i> Privacy & PII
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+                            <i class="fas fa-lock"></i> Security
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-4" id="profileTabsContent">
+                    <!-- Settings Tab -->
+                    <div class="tab-pane fade show active" id="settings" role="tabpanel">
+                        <div class="settings-section">
+                            <h5>Account Information</h5>
+                            <form id="profile-form">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="username" class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email Address</label>
+                                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" readonly>
+                                            <div class="form-text">Email cannot be changed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr>
+
+                        <div class="settings-section">
+                            <h5>Notification Settings</h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="message-notifications" checked>
+                                <label class="form-check-label" for="message-notifications">
+                                    Message Notifications
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="pii-alerts" checked>
+                                <label class="form-check-label" for="pii-alerts">
+                                    PII Detection Alerts
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="story-notifications">
+                                <label class="form-check-label" for="story-notifications">
+                                    Story Notifications
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Tab -->
+                    <div class="tab-pane fade" id="privacy" role="tabpanel">
+                        <div class="privacy-section">
+                            <h5>PII Detection Settings</h5>
+                            <p class="text-muted">Configure how our system detects and handles your personally identifiable information.</p>
+                            
+                            <div class="pii-settings">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="auto-pii-detection" checked>
+                                    <label class="form-check-label" for="auto-pii-detection">
+                                        <strong>Enable Auto PII Detection</strong><br>
+                                        <small class="text-muted">Automatically scan messages for PII before sending</small>
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="force-pii-redaction">
+                                    <label class="form-check-label" for="force-pii-redaction">
+                                        <strong>Force PII Redaction</strong><br>
+                                        <small class="text-muted">Automatically redact all detected PII without asking</small>
+                                    </label>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="pii-sensitivity" class="form-label">PII Detection Sensitivity</label>
+                                    <select class="form-select" id="pii-sensitivity">
+                                        <option value="low">Low - Only high-confidence matches</option>
+                                        <option value="medium" selected>Medium - Balanced detection</option>
+                                        <option value="high">High - Detect potential PII aggressively</option>
+                                    </select>
+                                </div>
+
+                                <div class="pii-types mb-3">
+                                    <label class="form-label">PII Types to Detect</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="detect-emails" checked>
+                                                <label class="form-check-label" for="detect-emails">Email Addresses</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="detect-phones" checked>
+                                                <label class="form-check-label" for="detect-phones">Phone Numbers</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="detect-names" checked>
+                                                <label class="form-check-label" for="detect-names">Personal Names</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="detect-aadhar" checked>
+                                                <label class="form-check-label" for="detect-aadhar">Aadhar Numbers</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="detect-passport" checked>
+                                                <label class="form-check-label" for="detect-passport">Passport Numbers</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="detect-credit-cards" checked>
+                                                <label class="form-check-label" for="detect-credit-cards">Credit Card Numbers</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="privacy-stats">
+                            <h5>Privacy Statistics</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h3 class="stat-number text-success">0</h3>
+                                        <p class="stat-label">Messages Protected</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h3 class="stat-number text-warning">0</h3>
+                                        <p class="stat-label">PII Instances Detected</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h3 class="stat-number text-info">0</h3>
+                                        <p class="stat-label">Auto-Redacted Items</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Tab -->
+                    <div class="tab-pane fade" id="security" role="tabpanel">
+                        <div class="security-section">
+                            <h5>Change Password</h5>
+                            <form id="password-form">
+                                <div class="mb-3">
+                                    <label for="current-password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="current-password" name="current_password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="new-password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new-password" name="new_password" required minlength="6">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirm-new-password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm-new-password" name="confirm_new_password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-key"></i> Update Password
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr>
+
+                        <div class="security-section">
+                            <h5>Account Security</h5>
+                            <div class="security-options">
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h6>Two-Factor Authentication</h6>
+                                        <p class="text-muted">Add an extra layer of security to your account</p>
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-sm">Enable</button>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h6>Login Sessions</h6>
+                                        <p class="text-muted">Manage your active sessions</p>
+                                    </div>
+                                    <button class="btn btn-outline-secondary btn-sm">View Sessions</button>
+                                </div>
+                                <div class="security-item">
+                                    <div class="security-info">
+                                        <h6>Download Data</h6>
+                                        <p class="text-muted">Export your account data</p>
+                                    </div>
+                                    <button class="btn btn-outline-info btn-sm">Export</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Profile form submission
+document.getElementById('profile-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    
+    fetch('/api/update_profile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Profile updated successfully!');
+        } else {
+            alert('Failed to update profile: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating profile.');
+    });
+});
+
+// Password form validation
+document.getElementById('confirm-new-password').addEventListener('input', function() {
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = this.value;
+    
+    if (newPassword !== confirmPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+</script>
+{% endblock %}

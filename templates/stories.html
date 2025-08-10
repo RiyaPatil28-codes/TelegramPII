@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Stories - Telegram PII{% endblock %}
+
+{% block content %}
+<div class="stories-container">
+    <!-- Stories Header -->
+    <div class="stories-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="fas fa-circle-notch me-2"></i>
+                Stories
+            </h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStoryModal">
+                <i class="fas fa-plus"></i> Create Story
+            </button>
+        </div>
+        <p class="text-muted">Share moments that disappear after 24 hours</p>
+    </div>
+
+    <!-- Stories Grid -->
+    <div class="stories-grid">
+        {% if stories %}
+            <div class="row">
+                {% for story in stories %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="story-card">
+                        <div class="story-header">
+                            <div class="story-user-info">
+                                <div class="story-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="story-user-details">
+                                    <h6 class="story-username">{{ story.username }}</h6>
+                                    <small class="story-time text-muted">
+                                        {{ moment(story.created_at).fromNow() if story.created_at else 'Just now' }}
+                                    </small>
+                                </div>
+                            </div>
+                            {% if story.is_own_story %}
+                            <div class="story-actions">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="story-content">
+                            {% if story.media_url %}
+                                <div class="story-media">
+                                    <img src="{{ story.media_url }}" alt="Story media" class="img-fluid">
+                                </div>
+                            {% endif %}
+                            
+                            {% if story.content %}
+                                <div class="story-text">
+                                    <p>{{ story.content }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="story-footer">
+                            <div class="story-stats">
+                                <span class="story-views">
+                                    <i class="fas fa-eye"></i> 0 views
+                                </span>
+                            </div>
+                            {% if not story.is_own_story %}
+                            <button class="btn btn-sm btn-outline-primary story-reply-btn">
+                                <i class="fas fa-reply"></i> Reply
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-stories">
+                <div class="text-center py-5">
+                    <i class="fas fa-circle-notch empty-icon"></i>
+                    <h4>No Stories Yet</h4>
+                    <p class="text-muted">Be the first to share a story with your contacts!</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStoryModal">
+                        <i class="fas fa-plus"></i> Create Your First Story
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Create Story Modal -->
+<div class="modal fade" id="createStoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Create New Story
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-story-form">
+                    <div class="mb-3">
+                        <label for="story-content" class="form-label">Story Content</label>
+                        <textarea class="form-control" id="story-content" name="content" rows="4" 
+                                  placeholder="What's on your mind? Share something that will disappear in 24 hours..." required></textarea>
+                        <div class="form-text">Maximum 500 characters</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="story-media" class="form-label">Add Media (Optional)</label>
+                        <input type="file" class="form-control" id="story-media" name="media" accept="image/*,video/*">
+                        <div class="form-text">Upload an image or video to make your story more engaging</div>
+                    </div>
+                    
+                    <!-- PII Warning for Stories -->
+                    <div id="story-pii-warning" class="alert alert-warning d-none">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Privacy Warning:</strong> Your story contains personally identifiable information. 
+                        Stories are visible to all your contacts and disappear after 24 hours.
+                        <div id="story-pii-details" class="mt-2">
+                            <!-- PII details will be shown here -->
+                        </div>
+                    </div>
+                    
+                    <div class="story-preview d-none" id="story-preview">
+                        <h6>Preview:</h6>
+                        <div class="preview-card">
+                            <div class="preview-content" id="preview-content"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="preview-story-btn" class="btn btn-outline-primary">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button type="button" id="publish-story-btn" class="btn btn-primary">
+                    <i class="fas fa-share"></i> Publish Story
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Story Viewer Modal -->
+<div class="modal fade" id="storyViewerModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content story-viewer">
+            <div class="modal-header story-viewer-header">
+                <div class="story-progress">
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body story-viewer-body">
+                <div class="story-viewer-content">
+                    <!-- Story content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer story-viewer-footer">
+                <div class="story-viewer-actions">
+                    <button class="btn btn-outline-light">
+                        <i class="fas fa-reply"></i> Reply
+                    </button>
+                    <button class="btn btn-outline-light">
+                        <i class="fas fa-share"></i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/stories.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pii-detection.js') }}"></script>
+
+<script>
+// Character counter for story content
+document.getElementById('story-content').addEventListener('input', function() {
+    const content = this.value;
+    const maxLength = 500;
+    const remaining = maxLength - content.length;
+    
+    // Update character counter (you can add this to the UI)
+    console.log(`Characters remaining: ${remaining}`);
+    
+    // Check for PII as user types
+    if (content.trim().length > 0) {
+        checkStoryPII(content);
+    } else {
+        hideStoryPIIWarning();
+    }
+});
+
+function checkStoryPII(content) {
+    fetch('/api/analyze_message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.has_pii) {
+            showStoryPIIWarning(data);
+        } else {
+            hideStoryPIIWarning();
+        }
+    })
+    .catch(error => {
+        console.error('Error checking PII:', error);
+    });
+}
+
+function showStoryPIIWarning(data) {
+    const warning = document.getElementById('story-pii-warning');
+    const details = document.getElementById('story-pii-details');
+    
+    let piiList = data.pii_detected.map(pii => `<span class="badge bg-warning me-1">${pii.type}: ${pii.value}</span>`).join('');
+    details.innerHTML = piiList;
+    
+    warning.classList.remove('d-none');
+}
+
+function hideStoryPIIWarning() {
+    document.getElementById('story-pii-warning').classList.add('d-none');
+}
+
+// Preview story
+document.getElementById('preview-story-btn').addEventListener('click', function() {
+    const content = document.getElementById('story-content').value;
+    const preview = document.getElementById('story-preview');
+    const previewContent = document.getElementById('preview-content');
+    
+    if (content.trim()) {
+        previewContent.textContent = content;
+        preview.classList.remove('d-none');
+    }
+});
+
+// Publish story
+document.getElementById('publish-story-btn').addEventListener('click', function() {
+    const content = document.getElementById('story-content').value;
+    
+    if (!content.trim()) {
+        alert('Please enter story content');
+        return;
+    }
+    
+    fetch('/api/create_story', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Story published successfully!');
+            location.reload();
+        } else if (data.has_pii) {
+            alert('Cannot publish story: Contains PII. Please remove personally identifiable information.');
+        } else {
+            alert('Failed to publish story: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error publishing story:', error);
+        alert('An error occurred while publishing the story.');
+    });
+});
+</script>
+{% endblock %}
