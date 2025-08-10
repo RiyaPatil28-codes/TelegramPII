@@ -12,7 +12,7 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 ## Frontend Architecture
 - **Template Engine**: Jinja2 templates with Bootstrap 5 for responsive UI
 - **Authentication Interface**: Modern two-panel layout with clean tabbed forms (auth.html)
-- **Design System**: Pure Telegram blue gradient background without purple elements
+- **Design System**: Pure Telegram blue gradient background with modern blue color scheme throughout
 - **JavaScript Components**: Modular ES6 classes for chat management, PII detection, and stories functionality
 - **Real-time Features**: AJAX-based messaging with live PII detection as users type
 - **UI Framework**: Bootstrap 5 with Font Awesome icons and custom CSS styling

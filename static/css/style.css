@@ -976,7 +976,7 @@ body {
 /* Modern Auth Page Styles */
 .auth-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -993,9 +993,9 @@ body {
     right: 0;
     bottom: 0;
     background: 
-        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, rgba(120, 200, 255, 0.3) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(0, 136, 204, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 102, 170, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(0, 180, 255, 0.3) 0%, transparent 50%);
     z-index: 1;
     animation: floatBg 8s ease-in-out infinite;
 }
@@ -1040,7 +1040,7 @@ body {
 }
 
 .auth-brand-side {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%);
     color: white;
     padding: 60px 40px;
     display: flex;
@@ -1212,8 +1212,8 @@ body {
 
 .form-input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #0088cc;
+    box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.1);
     transform: translateY(-1px);
 }
 
@@ -1264,7 +1264,7 @@ body {
 }
 
 .auth-btn.primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%);
     color: white;
     position: relative;
     overflow: hidden;
@@ -1282,9 +1282,9 @@ body {
 }
 
 .auth-btn.primary:hover {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    background: linear-gradient(135deg, #0077b3 0%, #005580 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 136, 204, 0.4);
 }
 
 .auth-btn.primary:hover::before {
