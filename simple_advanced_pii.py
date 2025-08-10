@@ -1,26 +1,46 @@
 #!/usr/bin/env python3
 """
-Simplified Advanced PII Detector - No heavy dependencies
-Uses TF-IDF and clustering with scikit-learn only
+Advanced PII Detector with Sentence-BERT Embeddings and Enhanced Clustering
+Uses Sentence-BERT, TF-IDF, DBSCAN, K-Means, and NER for comprehensive PII detection
 """
 
 import re
 import logging
 import numpy as np
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, KMeans
+from sklearn.metrics.pairwise import cosine_similarity
 import warnings
 warnings.filterwarnings("ignore")
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
+try:
+    import spacy
+    nlp = spacy.load('en_core_web_sm')
+    SPACY_AVAILABLE = True
+except (ImportError, OSError):
+    SPACY_AVAILABLE = False
+    nlp = None
 
 logger = logging.getLogger(__name__)
 
 class SimplifiedAdvancedPIIDetector:
     def __init__(self):
-        """Initialize simplified advanced PII detector"""
+        """Initialize advanced PII detector with Sentence-BERT and enhanced clustering"""
         self.setup_patterns()
         self.setup_pii_keywords()
         self.setup_vectorizer()
+        self.setup_sentence_transformer()
+        self.setup_ner_model()
+        self.pii_embeddings_cache = {}
+        self.normal_text_embeddings = None
+        self._initialize_normal_embeddings()
         
     def setup_patterns(self):
         """Setup regex patterns for PII detection"""
@@ -90,6 +110,53 @@ class SimplifiedAdvancedPIIDetector:
             min_df=1,
             lowercase=True
         )
+        
+    def setup_sentence_transformer(self):
+        """Setup Sentence-BERT model for semantic embeddings"""
+        if SENTENCE_TRANSFORMERS_AVAILABLE:
+            try:
+                # Use lightweight but effective model
+                self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+                logger.info("Sentence-BERT model loaded successfully")
+            except Exception as e:
+                logger.warning(f"Failed to load Sentence-BERT: {e}")
+                self.sentence_model = None
+        else:
+            logger.warning("Sentence-Transformers not available, using TF-IDF only")
+            self.sentence_model = None
+    
+    def setup_ner_model(self):
+        """Setup spaCy NER model"""
+        if SPACY_AVAILABLE and nlp:
+            self.ner_model = nlp
+            logger.info("spaCy NER model loaded successfully")
+        else:
+            logger.warning("spaCy not available, using pattern matching only")
+            self.ner_model = None
+    
+    def _initialize_normal_embeddings(self):
+        """Pre-compute embeddings for normal conversation patterns"""
+        if self.sentence_model:
+            normal_corpus = [
+                "Hello how are you doing today",
+                "The weather is nice and sunny",
+                "I enjoy reading books and watching movies",
+                "Thank you for your help and assistance",
+                "Have a wonderful day ahead",
+                "Nice to meet you and chat",
+                "Looking forward to hearing from you",
+                "Hope you are doing well",
+                "What are your hobbies and interests",
+                "How was your weekend",
+                "Great to hear from you",
+                "Let me know if you need anything"
+            ]
+            try:
+                self.normal_text_embeddings = self.sentence_model.encode(normal_corpus)
+                logger.info("Normal text embeddings computed")
+            except Exception as e:
+                logger.warning(f"Failed to compute normal embeddings: {e}")
+                self.normal_text_embeddings = None
         
     def detect_pii_regex(self, text: str) -> List[Dict[str, Any]]:
         """Detect PII using regex patterns with enhanced confidence"""
@@ -251,11 +318,11 @@ class SimplifiedAdvancedPIIDetector:
         return False
     
     def detect_pii_tfidf_clustering(self, text: str) -> List[Dict[str, Any]]:
-        """Use TF-IDF and clustering to find anomalous terms"""
+        """Enhanced TF-IDF with both DBSCAN and K-Means clustering"""
         try:
             detected = []
             
-            # Create a reference corpus of normal text
+            # Expanded reference corpus of normal text
             normal_corpus = [
                 "Hello how are you doing today",
                 "The weather is nice and sunny",
@@ -264,39 +331,88 @@ class SimplifiedAdvancedPIIDetector:
                 "Have a wonderful day ahead",
                 "Nice to meet you and chat",
                 "Looking forward to hearing from you",
-                "Hope you are doing well"
+                "Hope you are doing well",
+                "What are your hobbies and interests",
+                "How was your weekend",
+                "Great to hear from you",
+                "Let me know if you need anything",
+                "I hope this message finds you well",
+                "Thanks for reaching out to me",
+                "Have a great rest of your day"
             ]
             
-            # Tokenize input text into sentences
+            # Tokenize input text into sentences and phrases
             sentences = re.split(r'[.!?]+', text)
             sentences = [s.strip() for s in sentences if len(s.strip()) > 5]
             
-            if not sentences:
+            # Also extract phrases around potential PII indicators
+            phrases = []
+            for keyword_list in self.pii_keywords.values():
+                for keyword in keyword_list:
+                    if keyword.lower() in text.lower():
+                        # Extract phrase around keyword
+                        pattern = rf'.{{{0,20}}}{re.escape(keyword)}.{{{0,20}}}'
+                        matches = re.findall(pattern, text, re.IGNORECASE)
+                        phrases.extend([m.strip() for m in matches if len(m.strip()) > 5])
+            
+            all_text_units = sentences + phrases
+            if not all_text_units:
                 return detected
                 
-            # Combine corpus with input sentences
-            all_texts = normal_corpus + sentences
+            # Combine corpus with input text units
+            all_texts = normal_corpus + list(set(all_text_units))  # Remove duplicates
             
             try:
                 # Create TF-IDF matrix
                 tfidf_matrix = self.tfidf_vectorizer.fit_transform(all_texts)
                 
-                # Get vectors for input sentences only
+                # Get vectors for input text units only
                 input_vectors = tfidf_matrix[len(normal_corpus):]
                 
                 if input_vectors.shape[0] > 1:
-                    # Apply DBSCAN clustering to find outliers
-                    clustering = DBSCAN(eps=0.5, min_samples=1, metric='cosine')
-                    labels = clustering.fit_predict(input_vectors.toarray())
+                    input_array = input_vectors.toarray()
                     
-                    # Analyze sentences marked as outliers or in small clusters
-                    for i, (sentence, label) in enumerate(zip(sentences, labels)):
-                        if self.sentence_has_pii_indicators(sentence):
-                            pii_terms = self.extract_pii_terms_from_sentence(sentence)
-                            detected.extend(pii_terms)
+                    # Apply DBSCAN clustering to find outliers
+                    dbscan = DBSCAN(eps=0.4, min_samples=1, metric='cosine')
+                    dbscan_labels = dbscan.fit_predict(input_array)
+                    
+                    # Apply K-Means clustering for alternative grouping
+                    n_clusters = min(max(2, len(all_text_units) // 3), 5)
+                    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+                    kmeans_labels = kmeans.fit_predict(input_array)
+                    
+                    # Analyze clustering results
+                    for i, text_unit in enumerate(all_text_units):
+                        dbscan_label = dbscan_labels[i]
+                        kmeans_label = kmeans_labels[i]
+                        
+                        # Check if text unit has PII indicators
+                        if self.sentence_has_pii_indicators(text_unit):
+                            is_dbscan_outlier = (dbscan_label == -1)
+                            kmeans_cluster_size = np.sum(kmeans_labels == kmeans_label)
+                            
+                            # Higher confidence for outliers and small clusters
+                            base_confidence = 0.50
+                            if is_dbscan_outlier:
+                                base_confidence += 0.15
+                            if kmeans_cluster_size <= 2:
+                                base_confidence += 0.10
+                            
+                            # Extract PII terms from the text unit
+                            pii_terms = self.extract_pii_terms_from_sentence(text_unit)
+                            
+                            for term in pii_terms:
+                                term['confidence'] = min(0.95, term['confidence'] + base_confidence - 0.55)
+                                term['clustering_info'] = {
+                                    'dbscan_label': int(dbscan_label),
+                                    'kmeans_label': int(kmeans_label),
+                                    'is_outlier': is_dbscan_outlier,
+                                    'cluster_size': int(kmeans_cluster_size)
+                                }
+                                detected.append(term)
                             
             except Exception as e:
-                logger.warning(f"TF-IDF processing error: {e}")
+                logger.warning(f"TF-IDF clustering processing error: {e}")
                 
         except Exception as e:
             logger.warning(f"TF-IDF clustering error: {e}")
@@ -327,30 +443,84 @@ class SimplifiedAdvancedPIIDetector:
         return False
     
     def extract_pii_terms_from_sentence(self, sentence: str) -> List[Dict[str, Any]]:
-        """Extract potential PII terms from a sentence"""
+        """Enhanced extraction of potential PII terms from a sentence"""
         detected = []
         
-        # Extract numeric sequences
-        numbers = re.findall(r'\d{4,}', sentence)
+        # Extract numeric sequences (potential IDs, phone numbers, etc.)
+        numbers = re.findall(r'\b\d{4,}\b', sentence)
         for num in numbers:
+            pii_type = 'numeric_sequence'
+            confidence = 0.55
+            
+            # Classify based on length and context
+            if len(num) == 12 and any(word in sentence.lower() for word in ['aadhar', 'aadhaar']):
+                pii_type = 'aadhar'
+                confidence = 0.85
+            elif len(num) == 10 and any(word in sentence.lower() for word in ['phone', 'mobile', 'number']):
+                pii_type = 'phone'
+                confidence = 0.80
+            elif len(num) == 9 and any(word in sentence.lower() for word in ['ssn', 'social']):
+                pii_type = 'ssn'
+                confidence = 0.85
+            elif len(num) >= 6 and any(word in sentence.lower() for word in ['id', 'license', 'card']):
+                pii_type = 'id_number'
+                confidence = 0.70
+                
             detected.append({
-                'type': 'numeric_sequence',
+                'type': pii_type,
                 'value': num,
-                'confidence': 0.55,
+                'confidence': confidence,
                 'method': 'tfidf_clustering',
                 'context': sentence.strip()
             })
             
-        # Extract capitalized word sequences (potential names)
-        names = re.findall(r'\b[A-Z][a-z]+(?: [A-Z][a-z]+)+\b', sentence)
-        for name in names:
+        # Extract capitalized word sequences (potential names/places)
+        proper_nouns = re.findall(r'\b[A-Z][a-z]+(?: [A-Z][a-z]+)*\b', sentence)
+        for noun in proper_nouns:
+            words = noun.split()
+            if len(words) >= 2:
+                pii_type = 'potential_name'
+                confidence = 0.60
+                
+                # Check if it's likely a place name
+                if any(place_word in sentence.lower() for place_word in ['from', 'in', 'at', 'near', 'live', 'city', 'state']):
+                    pii_type = 'place_name'
+                    confidence = 0.75
+                # Check if it's likely a person name
+                elif any(name_word in sentence.lower() for name_word in ['name', 'i am', 'call me', 'mr', 'mrs', 'ms']):
+                    pii_type = 'person_name'
+                    confidence = 0.80
+                    
+                detected.append({
+                    'type': pii_type,
+                    'value': noun,
+                    'confidence': confidence,
+                    'method': 'tfidf_clustering',
+                    'context': sentence.strip()
+                })
+        
+        # Extract email patterns
+        emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', sentence)
+        for email in emails:
             detected.append({
-                'type': 'potential_name',
-                'value': name,
-                'confidence': 0.60,
+                'type': 'email',
+                'value': email,
+                'confidence': 0.95,
                 'method': 'tfidf_clustering',
                 'context': sentence.strip()
             })
+        
+        # Extract date patterns that might be birth dates
+        dates = re.findall(r'\b(?:0?[1-9]|[12][0-9]|3[01])[\/\-\.](0?[1-9]|1[012])[\/\-\.](?:19|20)\d{2}\b', sentence)
+        for date in dates:
+            if any(word in sentence.lower() for word in ['birth', 'born', 'dob', 'birthday']):
+                detected.append({
+                    'type': 'birth_date',
+                    'value': date,
+                    'confidence': 0.90,
+                    'method': 'tfidf_clustering',
+                    'context': sentence.strip()
+                })
             
         return detected
     
@@ -364,6 +534,204 @@ class SimplifiedAdvancedPIIDetector:
         end = min(len(text), pos + len(value) + 20)
         return text[start:end].strip()
     
+    def detect_pii_with_ner(self, text: str) -> List[Dict[str, Any]]:
+        """Use NER to detect person names, organizations, and locations"""
+        detected = []
+        
+        if not self.ner_model:
+            return detected
+            
+        try:
+            doc = self.ner_model(text)
+            
+            for ent in doc.ents:
+                confidence = 0.75
+                pii_type = 'unknown'
+                
+                if ent.label_ == "PERSON":
+                    pii_type = 'person_name'
+                    confidence = 0.85
+                elif ent.label_ in ["GPE", "LOC"]:  # Geopolitical entity, Location
+                    pii_type = 'place_name'
+                    confidence = 0.80
+                elif ent.label_ == "ORG":
+                    pii_type = 'organization'
+                    confidence = 0.70
+                elif ent.label_ == "DATE":
+                    # Check if it looks like a birth date
+                    if any(word in text.lower() for word in ['birth', 'born', 'dob']):
+                        pii_type = 'birth_date'
+                        confidence = 0.90
+                    else:
+                        continue  # Skip regular dates
+                else:
+                    continue
+                    
+                detected.append({
+                    'type': pii_type,
+                    'value': ent.text,
+                    'confidence': confidence,
+                    'method': 'spacy_ner',
+                    'context': self.get_context(text, ent.text),
+                    'ner_label': ent.label_
+                })
+                
+        except Exception as e:
+            logger.warning(f"NER processing error: {e}")
+            
+        return detected
+    
+    def extract_sentence_embeddings(self, text: str) -> Optional[np.ndarray]:
+        """Extract sentence embeddings using Sentence-BERT"""
+        if not self.sentence_model:
+            return None
+            
+        try:
+            # Split into sentences for better embedding quality
+            sentences = re.split(r'[.!?]+', text)
+            sentences = [s.strip() for s in sentences if len(s.strip()) > 3]
+            
+            if not sentences:
+                sentences = [text]
+                
+            embeddings = self.sentence_model.encode(sentences)
+            
+            # Average embeddings if multiple sentences
+            if len(embeddings.shape) > 1 and embeddings.shape[0] > 1:
+                return np.mean(embeddings, axis=0)
+            else:
+                return embeddings[0] if len(embeddings.shape) > 1 else embeddings
+                
+        except Exception as e:
+            logger.warning(f"Embedding extraction error: {e}")
+            return None
+    
+    def detect_pii_with_embeddings_clustering(self, text: str) -> List[Dict[str, Any]]:
+        """Use Sentence-BERT embeddings with DBSCAN and K-Means clustering"""
+        detected = []
+        
+        if not self.sentence_model or self.normal_text_embeddings is None:
+            return detected
+            
+        try:
+            # Extract embeddings for input text
+            input_embedding = self.extract_sentence_embeddings(text)
+            if input_embedding is None:
+                return detected
+                
+            # Calculate similarity with normal text patterns
+            similarities = cosine_similarity([input_embedding], self.normal_text_embeddings)[0]
+            max_similarity = np.max(similarities)
+            avg_similarity = np.mean(similarities)
+            
+            # If text is very dissimilar to normal patterns, analyze further
+            if max_similarity < 0.3 or avg_similarity < 0.2:
+                # Text is anomalous, check for PII patterns
+                
+                # Tokenize and tag potential PII candidates
+                pii_candidates = self.extract_pii_candidates(text)
+                
+                if pii_candidates:
+                    # Use clustering on candidate embeddings
+                    candidate_embeddings = []
+                    valid_candidates = []
+                    
+                    for candidate in pii_candidates:
+                        candidate_emb = self.extract_sentence_embeddings(candidate['context'])
+                        if candidate_emb is not None:
+                            candidate_embeddings.append(candidate_emb)
+                            valid_candidates.append(candidate)
+                    
+                    if len(candidate_embeddings) > 1:
+                        candidate_embeddings = np.array(candidate_embeddings)
+                        
+                        # Apply DBSCAN clustering
+                        dbscan = DBSCAN(eps=0.4, min_samples=1, metric='cosine')
+                        cluster_labels = dbscan.fit_predict(candidate_embeddings)
+                        
+                        # Apply K-Means as alternative clustering
+                        n_clusters = min(3, len(candidate_embeddings))
+                        if n_clusters > 1:
+                            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+                            kmeans_labels = kmeans.fit_predict(candidate_embeddings)
+                        else:
+                            kmeans_labels = np.zeros(len(candidate_embeddings))
+                        
+                        # Analyze clustering results
+                        for i, candidate in enumerate(valid_candidates):
+                            # Higher confidence for outliers (potential PII)
+                            is_outlier = (cluster_labels[i] == -1)  # DBSCAN outlier
+                            cluster_size = np.sum(kmeans_labels == kmeans_labels[i])
+                            
+                            confidence = candidate['base_confidence']
+                            if is_outlier:
+                                confidence += 0.15
+                            if cluster_size == 1:  # Unique pattern in K-Means
+                                confidence += 0.10
+                                
+                            detected.append({
+                                'type': candidate['type'],
+                                'value': candidate['value'],
+                                'confidence': min(0.98, confidence),
+                                'method': 'embedding_clustering',
+                                'context': candidate['context'],
+                                'clustering_info': {
+                                    'dbscan_label': int(cluster_labels[i]),
+                                    'kmeans_label': int(kmeans_labels[i]),
+                                    'is_outlier': is_outlier,
+                                    'similarity_score': float(max_similarity)
+                                }
+                            })
+                    
+        except Exception as e:
+            logger.warning(f"Embedding clustering error: {e}")
+            
+        return detected
+    
+    def extract_pii_candidates(self, text: str) -> List[Dict[str, Any]]:
+        """Extract candidate PII tokens using regex and contextual analysis"""
+        candidates = []
+        
+        # Extract potential tokens based on patterns
+        tokens = text.split()
+        
+        for i, token in enumerate(tokens):
+            # Get context window
+            start_idx = max(0, i - 3)
+            end_idx = min(len(tokens), i + 4)
+            context_tokens = tokens[start_idx:end_idx]
+            context = ' '.join(context_tokens)
+            
+            # Check various PII patterns
+            if re.match(r'\b[A-Z][a-z]+\b', token) and len(token) > 2:
+                # Potential name
+                candidates.append({
+                    'type': 'potential_name',
+                    'value': token,
+                    'context': context,
+                    'base_confidence': 0.60
+                })
+            
+            elif re.match(r'\d{4,}', token):
+                # Numeric sequence
+                candidates.append({
+                    'type': 'numeric_sequence',
+                    'value': token,
+                    'context': context,
+                    'base_confidence': 0.65
+                })
+            
+            elif '@' in token:
+                # Potential email
+                candidates.append({
+                    'type': 'potential_email',
+                    'value': token,
+                    'context': context,
+                    'base_confidence': 0.90
+                })
+        
+        return candidates
+    
     def comprehensive_pii_detection(self, text: str) -> Dict[str, Any]:
         """Run comprehensive PII detection using all available methods"""
         all_detected = []
@@ -376,7 +744,15 @@ class SimplifiedAdvancedPIIDetector:
         contextual_results = self.detect_pii_contextual_advanced(text)
         all_detected.extend(contextual_results)
         
-        # Method 3: TF-IDF clustering
+        # Method 3: NER-based detection
+        ner_results = self.detect_pii_with_ner(text)
+        all_detected.extend(ner_results)
+        
+        # Method 4: Sentence-BERT embeddings with clustering
+        embedding_results = self.detect_pii_with_embeddings_clustering(text)
+        all_detected.extend(embedding_results)
+        
+        # Method 5: TF-IDF clustering analysis (fallback)
         tfidf_results = self.detect_pii_tfidf_clustering(text)
         all_detected.extend(tfidf_results)
         
@@ -429,8 +805,12 @@ class SimplifiedAdvancedPIIDetector:
         # Weight by method reliability
         method_weights = {
             'enhanced_regex': 1.0,
+            'spacy_ner': 0.9,
+            'embedding_clustering': 0.85,
             'contextual_advanced': 0.7,
-            'tfidf_clustering': 0.6
+            'tfidf_clustering': 0.6,
+            'name_pattern': 0.8,
+            'place_pattern': 0.8
         }
         
         weighted_scores = []
