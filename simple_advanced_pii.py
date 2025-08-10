@@ -31,17 +31,54 @@ class SimplifiedAdvancedPIIDetector:
             'passport': r'\b[A-Z]{1}[0-9]{7}\b',
             'credit_card': r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
             'pan': r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b',
-            'ssn': r'\b\d{3}-\d{2}-\d{4}\b',
-            'ip_address': r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+            'ssn': r'\b\d{3}-?\d{2}-?\d{4}\b',
+            'ip_address': r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
+            # New patterns for enhanced PII detection
+            'birth_date': r'\b(?:0?[1-9]|[12][0-9]|3[01])[\/\-\.](0?[1-9]|1[012])[\/\-\.](?:19|20)\d{2}\b|\b(?:19|20)\d{2}[\/\-\.](0?[1-9]|1[012])[\/\-\.](0?[1-9]|[12][0-9]|3[01])\b',
+            'id_number': r'\b(?:ID|id|Id)[\s\-\#\:]*[A-Z0-9]{6,15}\b',
+            'driver_license': r'\b[A-Z]{1,2}\d{6,8}\b|\bDL[\s\-\#]*[A-Z0-9]{8,15}\b',
+            'place_name': r'\b(?:live in|from|at|in|near|visiting|traveled to|going to|located in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:city|town|village|state|country|district|county|province))?)\b'
         }
+        
+        # Common place name patterns
+        self.place_indicators = [
+            r'\b(?:Mumbai|Delhi|Bangalore|Chennai|Kolkata|Hyderabad|Ahmedabad|Pune|Surat|Jaipur|Lucknow|Kanpur|Nagpur|Indore|Thane|Bhopal|Visakhapatnam|Patna|Vadodara|Ghaziabad)\b',
+            r'\b(?:New York|Los Angeles|Chicago|Houston|Phoenix|Philadelphia|San Antonio|San Diego|Dallas|San Jose|Austin|Jacksonville|Fort Worth|Columbus|Charlotte|San Francisco|Indianapolis|Seattle|Denver|Washington|Boston)\b',
+            r'\b(?:London|Birmingham|Manchester|Glasgow|Sheffield|Liverpool|Edinburgh|Bristol|Cardiff|Leicester|Coventry|Belfast|Nottingham|Newcastle|Brighton|Hull|Plymouth|Stoke|Wolverhampton|Derby)\b',
+            r'\b(?:California|Texas|Florida|New York|Pennsylvania|Illinois|Ohio|Georgia|North Carolina|Michigan|New Jersey|Virginia|Washington|Arizona|Massachusetts|Tennessee|Indiana|Missouri|Maryland|Wisconsin)\b',
+            r'\b(?:Maharashtra|Karnataka|Tamil Nadu|Andhra Pradesh|Kerala|West Bengal|Gujarat|Rajasthan|Madhya Pradesh|Uttar Pradesh|Haryana|Punjab|Bihar|Odisha|Assam|Jharkhand|Chhattisgarh|Himachal Pradesh|Uttarakhand|Tripura)\b'
+        ]
         
     def setup_pii_keywords(self):
         """Setup contextual keywords for PII detection"""
         self.pii_keywords = {
-            'personal_info': ['name', 'full name', 'address', 'date of birth', 'dob', 'age'],
-            'contact_info': ['phone', 'mobile', 'email', 'contact', 'call me', 'reach me'],
-            'financial': ['account', 'bank', 'credit card', 'debit card', 'salary', 'income'],
-            'identification': ['aadhar', 'passport', 'license', 'pan', 'voter id', 'ssn']
+            'personal_info': [
+                'name', 'full name', 'first name', 'last name', 'surname', 'family name',
+                'address', 'home address', 'street address', 'residential address',
+                'date of birth', 'dob', 'birth date', 'birthday', 'born on', 'age',
+                'my name is', 'i am', 'called me', 'they call me'
+            ],
+            'contact_info': [
+                'phone', 'mobile', 'cell', 'telephone', 'number', 'contact',
+                'call me', 'reach me', 'phone number', 'mobile number',
+                'email', 'e-mail', 'mail', 'email address', 'contact email'
+            ],
+            'financial': [
+                'account', 'bank account', 'account number', 'routing number',
+                'credit card', 'debit card', 'card number', 'cvv', 'cvv2',
+                'salary', 'income', 'earnings', 'payment', 'bank details'
+            ],
+            'identification': [
+                'aadhar', 'aadhaar', 'passport', 'passport number',
+                'license', 'driving license', 'dl number', 'driver license',
+                'pan', 'pan card', 'voter id', 'voter card', 'ssn', 'social security',
+                'id number', 'identification', 'identity card', 'government id'
+            ],
+            'location': [
+                'live in', 'live at', 'from', 'based in', 'located in', 'residing in',
+                'address is', 'home is', 'staying at', 'visiting', 'traveled to',
+                'going to', 'city', 'town', 'state', 'country', 'zip code', 'pincode'
+            ]
         }
         
     def setup_vectorizer(self):
@@ -58,9 +95,14 @@ class SimplifiedAdvancedPIIDetector:
         """Detect PII using regex patterns with enhanced confidence"""
         detected = []
         
+        # Standard pattern matching
         for pii_type, pattern in self.pii_patterns.items():
             matches = re.findall(pattern, text, re.IGNORECASE)
             for match in matches:
+                if isinstance(match, tuple):
+                    # For patterns with groups, take the first group or join all
+                    match = match[0] if match[0] else ' '.join(filter(None, match))
+                
                 # Enhanced confidence based on pattern complexity
                 confidence = self.calculate_regex_confidence(pii_type, match)
                 
@@ -69,6 +111,36 @@ class SimplifiedAdvancedPIIDetector:
                     'value': match.strip(),
                     'confidence': confidence,
                     'method': 'enhanced_regex',
+                    'context': self.get_context(text, match)
+                })
+        
+        # Additional place name detection using common place patterns
+        for place_pattern in self.place_indicators:
+            matches = re.findall(place_pattern, text, re.IGNORECASE)
+            for match in matches:
+                detected.append({
+                    'type': 'place_name',
+                    'value': match.strip(),
+                    'confidence': 0.85,
+                    'method': 'place_pattern',
+                    'context': self.get_context(text, match)
+                })
+        
+        # Name detection using contextual patterns
+        name_patterns = [
+            r'\b(?:my name is|i am|i\'m|call me|they call me)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b',
+            r'\b(?:mr|mrs|ms|dr|prof)\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b',
+            r'\b([A-Z][a-z]+\s+[A-Z][a-z]+)\s+(?:here|speaking|calling)\b'
+        ]
+        
+        for name_pattern in name_patterns:
+            matches = re.findall(name_pattern, text, re.IGNORECASE)
+            for match in matches:
+                detected.append({
+                    'type': 'person_name',
+                    'value': match.strip(),
+                    'confidence': 0.80,
+                    'method': 'name_pattern',
                     'context': self.get_context(text, match)
                 })
                 
@@ -84,7 +156,12 @@ class SimplifiedAdvancedPIIDetector:
             'credit_card': 0.85,
             'pan': 0.90,
             'ssn': 0.92,
-            'ip_address': 0.75
+            'ip_address': 0.75,
+            'birth_date': 0.85,
+            'id_number': 0.80,
+            'driver_license': 0.85,
+            'place_name': 0.75,
+            'person_name': 0.70
         }
         
         confidence = base_confidence.get(pii_type, 0.70)
@@ -99,6 +176,20 @@ class SimplifiedAdvancedPIIDetector:
         elif pii_type == 'aadhar':
             if len(re.sub(r'[\s-]', '', value)) == 12:
                 confidence += 0.03
+        elif pii_type in ['person_name', 'place_name']:
+            # Names and places need higher thresholds
+            if len(value.split()) >= 2:
+                confidence += 0.05
+            if value[0].isupper():
+                confidence += 0.05
+        elif pii_type == 'birth_date':
+            # Birth dates with separators are more confident
+            if '/' in value or '-' in value or '.' in value:
+                confidence += 0.05
+        elif pii_type in ['id_number', 'driver_license']:
+            # ID numbers with proper format
+            if len(value) >= 8:
+                confidence += 0.05
                 
         return min(0.98, confidence)
     

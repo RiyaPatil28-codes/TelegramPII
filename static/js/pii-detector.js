@@ -6,13 +6,18 @@ class PIIDetectorFrontend {
             aadhar: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
             passport: /\b[A-Z]{1}[0-9]{7}\b/g,
             creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
-            pan: /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/g
+            pan: /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/g,
+            ssn: /\b\d{3}-?\d{2}-?\d{4}\b/g,
+            birthDate: /\b(?:0?[1-9]|[12][0-9]|3[01])[\/\-\.](0?[1-9]|1[012])[\/\-\.](?:19|20)\d{2}\b/g,
+            idNumber: /\b(?:ID|id|Id)[\s\-\#\:]*[A-Z0-9]{6,15}\b/g
         };
         
         this.piiKeywords = [
             'name', 'phone', 'email', 'address', 'aadhar', 'passport', 'ssn',
             'credit card', 'debit card', 'pan', 'bank account', 'license',
-            'birth date', 'dob', 'age', 'location', 'zip code', 'pincode'
+            'birth date', 'dob', 'age', 'location', 'zip code', 'pincode',
+            'live in', 'from', 'city', 'state', 'country', 'id number',
+            'my name is', 'i am', 'born on', 'birthday'
         ];
         
         this.currentPIIDetected = []; // Track current PII state
@@ -42,22 +47,45 @@ class PIIDetectorFrontend {
             }
         }
         
-        // Basic name detection (capitalized words)
-        const namePattern = /\b[A-Z][a-z]+ [A-Z][a-z]+/g;
-        const nameMatches = text.match(namePattern);
-        if (nameMatches) {
+        // Enhanced name detection with context
+        const namePatterns = [
+            /\b(?:my name is|i am|i'm|call me)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
+            /\b([A-Z][a-z]+ [A-Z][a-z]+)\s+(?:here|speaking|calling)/gi,
+            /\b(?:mr|mrs|ms|dr|prof)\.?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi
+        ];
+        
+        namePatterns.forEach(pattern => {
+            const nameMatches = [...text.matchAll(pattern)];
             nameMatches.forEach(match => {
-                // Exclude common non-names
-                const commonWords = ['Hello There', 'Thank You', 'Good Morning', 'Best Regards'];
-                if (!commonWords.includes(match)) {
+                const name = match[1] || match[0];
+                const commonWords = ['Hello There', 'Thank You', 'Good Morning', 'Best Regards', 'New York', 'Los Angeles'];
+                if (!commonWords.includes(name)) {
                     detected.push({
-                        type: 'name',
-                        value: match,
-                        confidence: 0.6
+                        type: 'person_name',
+                        value: name,
+                        confidence: 0.8
                     });
                 }
             });
-        }
+        });
+        
+        // Place name detection
+        const placePatterns = [
+            /\b(?:live in|from|at|in|near|visiting|traveled to|going to|located in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
+            /\b(Mumbai|Delhi|Bangalore|Chennai|Kolkata|New York|Los Angeles|London|California|Texas)\b/gi
+        ];
+        
+        placePatterns.forEach(pattern => {
+            const placeMatches = [...text.matchAll(pattern)];
+            placeMatches.forEach(match => {
+                const place = match[1] || match[0];
+                detected.push({
+                    type: 'place_name',
+                    value: place,
+                    confidence: 0.85
+                });
+            });
+        });
         
         return detected;
     }
@@ -72,7 +100,15 @@ class PIIDetectorFrontend {
             'passport': '[PASSPORT_REDACTED]',
             'creditCard': '[CARD_REDACTED]',
             'pan': '[PAN_REDACTED]',
-            'name': '[NAME_REDACTED]'
+            'name': '[NAME_REDACTED]',
+            'ssn': '[SSN_REDACTED]',
+            'birthDate': '[BIRTHDATE_REDACTED]',
+            'idNumber': '[ID_REDACTED]',
+            'place_name': '[LOCATION_REDACTED]',
+            'person_name': '[NAME_REDACTED]',
+            'birth_date': '[BIRTHDATE_REDACTED]',
+            'id_number': '[ID_REDACTED]',
+            'driver_license': '[LICENSE_REDACTED]'
         };
 
         detectedPII.forEach(pii => {
