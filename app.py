@@ -1,7 +1,7 @@
 import os
 import logging
 from flask import Flask
-from flask_pymongo import PyMongo
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure logging
@@ -12,9 +12,13 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# MongoDB configuration
-app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/telegram_pii_db")
-mongo = PyMongo(app)
+# PostgreSQL configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+db = SQLAlchemy(app)
 
 # Import routes after app creation to avoid circular imports
 from routes import *

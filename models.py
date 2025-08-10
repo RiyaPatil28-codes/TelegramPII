@@ -1,69 +1,51 @@
-from bson import ObjectId
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import mongo
+from app import db
 import logging
 
-class User:
-    def __init__(self, username=None, email=None, password=None, profile_picture=None, _id=None):
+class User(db.Model):
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))
+    profile_picture = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy='dynamic')
+    received_messages = db.relationship('Message', foreign_keys='Message.recipient_id', backref='recipient', lazy='dynamic')
+    stories = db.relationship('Story', backref='author', lazy='dynamic')
+    
+    def __init__(self, username=None, email=None, password=None, profile_picture=None):
         self.username = username
         self.email = email
-        self.password_hash = generate_password_hash(password) if password else None
+        if password:
+            self.password_hash = generate_password_hash(password)
         self.profile_picture = profile_picture
-        self.created_at = datetime.utcnow()
-        self._id = _id
     
     def save(self):
-        """Save user to MongoDB"""
+        """Save user to PostgreSQL"""
         try:
-            user_data = {
-                'username': self.username,
-                'email': self.email,
-                'password_hash': self.password_hash,
-                'profile_picture': self.profile_picture,
-                'created_at': self.created_at,
-                'contacts': [],
-                'blocked_users': []
-            }
-            result = mongo.db.users.insert_one(user_data)
-            self._id = result.inserted_id
-            logging.debug(f"User saved with ID: {self._id}")
+            db.session.add(self)
+            db.session.commit()
+            logging.debug(f"User saved with ID: {self.id}")
             return True
         except Exception as e:
+            db.session.rollback()
             logging.error(f"Error saving user: {e}")
             return False
     
     @staticmethod
     def find_by_email(email):
         """Find user by email"""
-        user_data = mongo.db.users.find_one({'email': email})
-        if user_data:
-            user = User()
-            user._id = user_data['_id']
-            user.username = user_data['username']
-            user.email = user_data['email']
-            user.password_hash = user_data['password_hash']
-            user.profile_picture = user_data.get('profile_picture')
-            user.created_at = user_data.get('created_at')
-            return user
-        return None
+        return User.query.filter_by(email=email).first()
     
     @staticmethod
     def find_by_id(user_id):
         """Find user by ID"""
-        if isinstance(user_id, str):
-            user_id = ObjectId(user_id)
-        user_data = mongo.db.users.find_one({'_id': user_id})
-        if user_data:
-            user = User()
-            user._id = user_data['_id']
-            user.username = user_data['username']
-            user.email = user_data['email']
-            user.password_hash = user_data['password_hash']
-            user.profile_picture = user_data.get('profile_picture')
-            user.created_at = user_data.get('created_at')
-            return user
-        return None
+        return User.query.get(user_id)
     
     def check_password(self, password):
         """Check if provided password matches hash"""
@@ -73,7 +55,7 @@ class User:
     
     def get_id(self):
         """Return user ID as string for Flask-Login"""
-        return str(self._id)
+        return str(self.id)
     
     def is_authenticated(self):
         return True
