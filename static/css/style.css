@@ -1696,7 +1696,8 @@ a.auth-btn.secondary:hover {
 .message-content {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    flex: none;
+    max-width: 280px;
 }
 
 .message-bubble {

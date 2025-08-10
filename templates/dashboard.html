@@ -175,8 +175,8 @@
                 <div class="message-avatar">
                     <div class="avatar-placeholder ai-avatar">SC</div>
                 </div>
-                <div class="message-content" style="max-width: 350px !important; width: auto !important;">
-                    <div class="message-bubble" style="max-width: 320px !important; width: auto !important;">
+                <div class="message-content" style="max-width: 280px !important; width: auto !important; flex: none !important;">
+                    <div class="message-bubble" style="max-width: 260px !important; width: auto !important;">
                         <p>Hey! 😊 So good to chat with you! I just finished watching this amazing movie last night. What have you been up to lately?</p>
                     </div>
                     <div class="message-time">2:45 PM</div>
@@ -212,9 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Force smaller message bubbles with fixed pixel widths
     const messageContents = document.querySelectorAll('.message-content');
     messageContents.forEach(content => {
-        content.style.maxWidth = '350px';
-        content.style.minWidth = '200px';
+        content.style.maxWidth = '280px';
+        content.style.minWidth = '180px';
         content.style.width = 'auto';
+        content.style.flex = 'none';
     });
     
     const messages = document.querySelectorAll('.message');
