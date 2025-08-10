@@ -194,7 +194,10 @@
 // Initialize chat with PII detection
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Chat interface with PII detection loaded');
+    window.piiDetector = new PIIDetectorFrontend();
     window.chatManager = new ChatManager();
+    
+    console.log('PII Detector initialized:', !!window.piiDetector);
 });
 </script>
 {% endblock %}

@@ -188,27 +188,40 @@ class ChatManager {
         
         if (!message) return;
         
+        // Initialize PII detector if not available
+        if (!window.piiDetector) {
+            window.piiDetector = new PIIDetectorFrontend();
+        }
+        
         // Quick client-side PII detection
         const quickPII = window.piiDetector.quickDetectPII(message);
+        console.log('PII detected:', quickPII);
         
         if (quickPII.length > 0) {
-            // Show PII confirmation dialog
+            // Show PII confirmation dialog - DON'T clear input yet
             window.piiDetector.showPIIConfirmation(message, quickPII, async (action) => {
                 if (action === 'cancel') {
-                    return; // Don't send message
+                    console.log('User cancelled PII send');
+                    return; // Don't send message, keep text in input
                 }
                 
                 const sendRedacted = action === 'redacted';
+                console.log('Sending with PII action:', action);
                 await this.processSendMessage(message, sendRedacted);
+                
+                // Only clear input AFTER successful send
+                messageInput.value = '';
+                this.clearPIIWarning();
             });
         } else {
             // No PII detected, send normally
+            console.log('No PII detected, sending normally');
             await this.processSendMessage(message, false);
+            
+            // Clear input and PII warnings after send
+            messageInput.value = '';
+            this.clearPIIWarning();
         }
-        
-        // Clear input and PII warnings
-        messageInput.value = '';
-        this.clearPIIWarning();
     }
 
     async processSendMessage(message, sendRedacted) {
