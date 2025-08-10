@@ -1304,6 +1304,49 @@ a.auth-btn.secondary:hover {
     text-decoration: none;
 }
 
+/* PII Warning Bar Styles */
+.pii-warning-bar {
+    background: linear-gradient(90deg, #fff3cd, #ffeaa7);
+    border: 1px solid #ffeaa7;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #856404;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideDown 0.3s ease-out;
+}
+
+.pii-warning-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.pii-warning-content i {
+    color: #ff6b35;
+    font-size: 16px;
+}
+
+.pii-warning-note {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 12px;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Chat Interface Styles */
 .chat-container {
     display: flex;

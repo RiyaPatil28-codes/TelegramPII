@@ -14,6 +14,15 @@ class PIIDetectorFrontend {
             'credit card', 'debit card', 'pan', 'bank account', 'license',
             'birth date', 'dob', 'age', 'location', 'zip code', 'pincode'
         ];
+        
+        this.currentPIIDetected = []; // Track current PII state
+    }
+
+    // Clear PII detection state
+    clearPIIState() {
+        this.currentPIIDetected = [];
+        const existingModals = document.querySelectorAll('.pii-modal-overlay');
+        existingModals.forEach(modal => modal.remove());
     }
 
     // Quick client-side PII detection for immediate feedback

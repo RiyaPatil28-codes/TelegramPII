@@ -118,9 +118,15 @@ class ChatManager {
             }
         });
 
-        // Real-time PII detection
+        // Real-time PII detection with cleanup
         messageInput.addEventListener('input', (e) => {
-            this.detectPII(e.target.value);
+            const value = e.target.value.trim();
+            if (value === '') {
+                // Clear PII warnings when input is empty
+                this.clearPIIWarning();
+            } else {
+                this.detectPII(value);
+            }
         });
 
         // Search functionality
@@ -200,7 +206,9 @@ class ChatManager {
             await this.processSendMessage(message, false);
         }
         
+        // Clear input and PII warnings
         messageInput.value = '';
+        this.clearPIIWarning();
     }
 
     async processSendMessage(message, sendRedacted) {
@@ -345,6 +353,60 @@ class ChatManager {
     scrollToBottom() {
         const messagesContainer = document.getElementById('messagesContainer');
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Clear PII warning function
+    clearPIIWarning() {
+        const existingWarning = document.querySelector('.pii-warning-bar');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+        
+        // Clear any modal overlays
+        const existingModal = document.querySelector('.pii-modal-overlay');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Reset PII state
+        if (window.piiDetector) {
+            window.piiDetector.currentPIIDetected = [];
+        }
+    }
+
+    // Enhanced PII detection with proper cleanup
+    detectPII(text) {
+        if (!text || !text.trim()) {
+            this.clearPIIWarning();
+            return;
+        }
+        
+        if (window.piiDetector) {
+            const piiItems = window.piiDetector.quickDetectPII(text);
+            if (piiItems.length > 0) {
+                this.showPIIWarning(piiItems);
+            } else {
+                this.clearPIIWarning();
+            }
+        }
+    }
+
+    // Show inline PII warning (not modal)
+    showPIIWarning(piiItems) {
+        this.clearPIIWarning(); // Remove any existing warning
+        
+        const inputArea = document.querySelector('.message-input-container');
+        const warningBar = document.createElement('div');
+        warningBar.className = 'pii-warning-bar';
+        warningBar.innerHTML = `
+            <div class="pii-warning-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Sensitive information detected: ${piiItems.map(p => p.type).join(', ')}</span>
+                <span class="pii-warning-note">Be careful sharing personal information in chats</span>
+            </div>
+        `;
+        
+        inputArea.insertBefore(warningBar, inputArea.firstChild);
     }
 
     filterChats(searchTerm) {
