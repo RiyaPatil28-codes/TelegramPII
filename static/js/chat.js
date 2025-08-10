@@ -213,11 +213,11 @@ class ChatManager {
                 let messageToSend = message;
                 
                 if (sendRedacted) {
-                    // Generate redacted version for display
-                    const redactedMessage = this.redactMessage(message, quickPII);
+                    // Generate redacted version for display using selected method
+                    const redactedMessage = this.redactMessageWithMethod(message, quickPII, redactionMethod || 'placeholder');
                     messageToDisplay = redactedMessage;
                     messageToSend = redactedMessage;
-                    console.log('Redacted message:', redactedMessage);
+                    console.log('Redacted message with method:', redactionMethod, ':', redactedMessage);
                 }
                 
                 await this.processSendMessage(messageToSend, sendRedacted, messageToDisplay);
@@ -418,6 +418,63 @@ class ChatManager {
             'name': '[NAME_REDACTED]'
         };
         return placeholders[type] || '[REDACTED]';
+    }
+
+    // Advanced redaction with method selection
+    redactMessageWithMethod(message, piiItems, method) {
+        let redacted = message;
+        
+        // Sort PII items by length (longest first) to avoid partial replacements
+        const sortedPII = piiItems.sort((a, b) => b.value.length - a.value.length);
+        
+        for (const pii of sortedPII) {
+            let replacement;
+            
+            if (method === 'placeholder') {
+                replacement = this.getPIIPlaceholder(pii.type);
+            } else if (method === 'mask') {
+                replacement = this.maskPIIValue(pii.type, pii.value);
+            } else if (method === 'remove') {
+                replacement = '';
+            } else {
+                replacement = this.getPIIPlaceholder(pii.type);
+            }
+            
+            redacted = redacted.replace(new RegExp(this.escapeRegex(pii.value), 'g'), replacement);
+        }
+        
+        return redacted;
+    }
+
+    // Mask PII values while preserving format
+    maskPIIValue(type, value) {
+        switch (type) {
+            case 'email':
+                return value.replace(/(.{2})(.*)(@.{2})(.*)/, '$1***$3***');
+            case 'phone':
+                if (value.length === 10) {
+                    return value.replace(/(\d{3})(\d{4})(\d{3})/, '$1****$3');
+                } else {
+                    return value.replace(/(\d{3})(\d*)(\d{3})/, '$1****$3');
+                }
+            case 'aadhar':
+                return value.replace(/(\d{4})(.*)(\d{4})/, '$1-****-$3');
+            case 'passport':
+                return value.replace(/([A-Z]{1})(.*)/, '$1*******');
+            case 'creditCard':
+                return value.replace(/(\d{4})(.*)(\d{4})/, '$1-****-****-$3');
+            case 'pan':
+                return value.replace(/([A-Z]{3})(.*)([A-Z]{1})/, '$1**$3**$5');
+            case 'name':
+                const parts = value.split(' ');
+                if (parts.length >= 2) {
+                    return parts[0] + ' ***';
+                } else {
+                    return value.replace(/(.{2})(.*)/, '$1***');
+                }
+            default:
+                return '***';
+        }
     }
     
     // Escape regex special characters
