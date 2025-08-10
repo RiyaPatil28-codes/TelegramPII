@@ -1388,7 +1388,15 @@ a.auth-btn.secondary:hover {
 }
 
 .avatar-circle {
-    font-size: 18px;
+    font-size: 22px;
+}
+
+/* Bot subtitle styling */
+.chat-subtitle {
+    font-size: 12px;
+    color: #8e8e93;
+    font-weight: 400;
+    margin-top: 1px;
 }
 
 .ai-avatar { background: linear-gradient(135deg, #0088cc, #0066aa); color: white; }

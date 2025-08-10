@@ -15,7 +15,7 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 - **Design System**: Pure Telegram blue gradient background with dark-themed chat dashboard
 - **Chat Interface**: Modern dark-themed dashboard with sidebar containing pre-added bots
 - **JavaScript Components**: Interactive ChatManager class for real-time bot conversations
-- **Bot System**: 6 specialized bots with unique avatars and response patterns
+- **Bot System**: 6 personalized bots with human names, professional backgrounds, and unique personality-driven responses
 - **UI Framework**: Bootstrap 5 with Font Awesome icons and custom CSS styling
 - **Cache Management**: Cache-busting parameters and no-cache headers for immediate UI updates
 
@@ -29,7 +29,7 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 ## Data Storage
 - **Current Implementation**: Simplified in-memory storage for demonstration
 - **User Storage**: SimpleStorage class handling user authentication and data
-- **Bot Responses**: Pre-configured response patterns for each specialized bot
+- **Bot Personalities**: 6 named bots with detailed backgrounds - Sarah Chen (AI Assistant), Alex Rodriguez (Security Expert), Maya Patel (News Reporter), David Kim (Meteorologist), Elena Kowalski (Linguist), and Ryan O'Connor (Senior Developer)
 - **Session Management**: Flask sessions for user state and authentication
 - **Future Enhancement**: Can be upgraded to MongoDB or PostgreSQL as needed
 

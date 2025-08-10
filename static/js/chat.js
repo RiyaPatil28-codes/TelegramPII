@@ -3,75 +3,87 @@ class ChatManager {
         this.currentBot = 'ai-assistant';
         this.bots = {
             'ai-assistant': {
-                name: 'AI Assistant',
-                avatar: '<i class="fas fa-robot"></i>',
+                name: 'Sarah Chen',
+                subtitle: 'AI Assistant',
+                avatar: '👩‍💼',
                 class: 'ai-avatar',
                 responses: [
-                    "I'm here to help! What would you like to know?",
-                    "That's an interesting question. Let me think about that...",
-                    "I can help you with various tasks. What do you need assistance with?",
-                    "Feel free to ask me anything - I'm here to help!",
-                    "Is there something specific you'd like to discuss?"
+                    "Hi! I'm Sarah, your AI assistant. I love helping people solve problems and find answers.",
+                    "That's a fascinating question! Let me share what I know about that topic...",
+                    "I've been working in AI for several years now. What can I help you accomplish today?",
+                    "Great to meet you! I enjoy having meaningful conversations and helping with various tasks.",
+                    "As an AI specialist, I'm always excited to tackle new challenges. What's on your mind?",
+                    "I find every conversation unique and interesting. How can I assist you right now?"
                 ]
             },
             'pii-detector': {
-                name: 'PII Detector Bot',
-                avatar: '<i class="fas fa-shield-alt"></i>',
+                name: 'Alex Rodriguez',
+                subtitle: 'Security Expert',
+                avatar: '👨‍🔒',
                 class: 'security-avatar',
                 responses: [
-                    "I'll scan your message for personal information. Please send the text you want me to analyze.",
-                    "No PII detected in your message. It looks safe to share!",
-                    "⚠️ I found potential personal information in your message. Please review before sharing.",
-                    "I can detect emails, phone numbers, addresses, and other sensitive data.",
-                    "Your privacy is important. I'll help you identify sensitive information."
+                    "Hey there! Alex here. I'm a cybersecurity specialist. Send me text and I'll scan for sensitive info.",
+                    "Perfect! No personal information detected in your message. You're all clear!",
+                    "⚠️ Hold up! I spotted potential PII in that text. Let me highlight what I found...",
+                    "As someone who's worked in data protection for 8 years, I can spot risky info instantly.",
+                    "Your privacy matters to me. I'll help you identify emails, phones, SSNs, and more.",
+                    "I've seen too many data breaches. Let me help keep your information secure!"
                 ]
             },
             'news-bot': {
-                name: 'News Bot',
-                avatar: '<i class="fas fa-newspaper"></i>',
+                name: 'Maya Patel',
+                subtitle: 'News Reporter',
+                avatar: '👩‍📺',
                 class: 'news-avatar',
                 responses: [
-                    "Here are today's top headlines from around the world:",
-                    "Breaking news: Stay updated with the latest developments!",
-                    "Would you like news from a specific category or region?",
-                    "I can provide news on technology, sports, business, and more.",
-                    "What type of news interests you most?"
+                    "Good day! Maya here, reporting live with today's most important stories.",
+                    "Breaking update: I've got the latest news fresh from the newsroom!",
+                    "As a journalist, I love keeping people informed. What news topics interest you?",
+                    "I cover everything from tech breakthroughs to local community events. What would you like to hear about?",
+                    "Just finished my morning briefing. Want the headlines or something more specific?",
+                    "I've been in journalism for 10 years. News moves fast, but I'll keep you updated!"
                 ]
             },
             'weather-bot': {
-                name: 'Weather Bot',
-                avatar: '<i class="fas fa-cloud-sun"></i>',
+                name: 'David Kim',
+                subtitle: 'Meteorologist',
+                avatar: '👨‍🔬',
                 class: 'weather-avatar',
                 responses: [
-                    "Today's weather: Sunny with a high of 24°C and low of 18°C",
-                    "Perfect weather for outdoor activities! Clear skies expected.",
-                    "Which city would you like the weather forecast for?",
-                    "I can provide current conditions and 5-day forecasts.",
-                    "Don't forget your umbrella - rain expected this evening!"
+                    "Hi! David here, your friendly neighborhood meteorologist. Beautiful day ahead!",
+                    "Currently 24°C with sunny skies - perfect weather for any outdoor plans you might have!",
+                    "I've been forecasting weather for 15 years. Which location would you like me to check?",
+                    "Fun weather fact: This high-pressure system will keep us sunny for the next few days!",
+                    "Planning something outdoors? I can give you hour-by-hour forecasts to help you decide.",
+                    "As a meteorologist, I love talking about weather patterns. Tonight's looking clear and cool!"
                 ]
             },
             'translator-bot': {
-                name: 'Translator Bot',
-                avatar: '<i class="fas fa-language"></i>',
+                name: 'Elena Kowalski',
+                subtitle: 'Linguist',
+                avatar: '👩‍🏫',
                 class: 'translator-avatar',
                 responses: [
-                    "I can translate between over 100 languages. What would you like to translate?",
-                    "Just send me the text and specify the target language!",
-                    "Translation complete! Here's your text in the requested language:",
-                    "I support real-time translation for instant communication.",
-                    "Which languages would you like me to translate between?"
+                    "¡Hola! I'm Elena. I speak 12 languages fluently and love helping people communicate!",
+                    "Bonjour! As a linguistics professor, translation is my passion. What can I help you with?",
+                    "I studied at universities in Paris, Tokyo, and São Paulo. Send me anything to translate!",
+                    "Languages are beautiful! I can handle everything from casual messages to technical documents.",
+                    "Fun fact: I can often detect what language you're writing in just from context clues!",
+                    "Whether it's business, poetry, or casual chat - I'll help you break language barriers!"
                 ]
             },
             'code-helper': {
-                name: 'Code Helper',
-                avatar: '<i class="fas fa-code"></i>',
+                name: 'Ryan O\'Connor',
+                subtitle: 'Senior Developer',
+                avatar: '👨‍💻',
                 class: 'code-avatar',
                 responses: [
-                    "I can help you with programming questions, code reviews, and debugging!",
-                    "What programming language are you working with?",
-                    "Here's a solution for your coding problem:",
-                    "I support Python, JavaScript, Java, C++, and many other languages.",
-                    "Need help with algorithms, data structures, or specific coding tasks?"
+                    "Hey! Ryan here, senior full-stack developer with 12+ years in the field. What's your coding challenge?",
+                    "I work mainly in Python, JavaScript, and React these days. What project are you building?",
+                    "Debugging is like solving puzzles - I love it! Share your code and I'll take a look.",
+                    "From startups to big tech, I've seen it all. Every bug has a story, let's solve yours!",
+                    "Currently leading a team at a tech company, but I always enjoy helping fellow developers.",
+                    "Coffee, code, repeat! That's been my life. What programming problem can we tackle together?"
                 ]
             }
         };
