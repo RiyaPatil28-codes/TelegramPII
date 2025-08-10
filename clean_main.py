@@ -312,11 +312,11 @@ def register():
         
         if not all([name, email, password]):
             flash('All fields are required', 'error')
-            return render_template('register.html')
+            return render_template('auth.html')
         
         if email in users_db:
             flash('Email already exists', 'error')
-            return render_template('register.html')
+            return render_template('auth.html')
         
         users_db[email] = {
             'email': email,
@@ -330,7 +330,7 @@ def register():
         flash(f'Welcome, {name}! Your account has been created.', 'success')
         return redirect(url_for('dashboard'))
     
-    return render_template('register.html')
+    return render_template('auth.html')
 
 @app.route('/dashboard')
 def dashboard():
