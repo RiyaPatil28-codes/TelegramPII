@@ -20,16 +20,12 @@
         
         <!-- Right side - Auth Forms -->
         <div class="auth-form-side">
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="showLogin()">Sign In</button>
-                <button class="auth-tab" onclick="showRegister()">Sign Up</button>
-            </div>
             
             <!-- Login Form -->
             <div id="login-form" class="auth-form active">
                 <div class="form-header">
                     <h2>Welcome Back</h2>
-                    <p>Sign in to your account to continue chatting securely</p>
+                    <p>Enter your credentials to continue chatting securely</p>
                 </div>
                 
                 <form method="POST" action="{{ url_for('login') }}">
@@ -54,10 +50,17 @@
                     
                     <button type="submit" class="auth-btn primary">
                         <i class="fas fa-sign-in-alt"></i>
-                        Sign In
+                        Continue
                     </button>
                 </form>
                 
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button type="button" class="auth-btn secondary" onclick="showRegister()">
+                    Create New Account
+                </button>
 
             </div>
             
@@ -65,7 +68,7 @@
             <div id="register-form" class="auth-form">
                 <div class="form-header">
                     <h2>Create Account</h2>
-                    <p>Join Telegram PII and start chatting securely today</p>
+                    <p>Join our secure messaging platform</p>
                 </div>
                 
                 <form method="POST" action="{{ url_for('register') }}">
@@ -102,6 +105,14 @@
                         Create Account
                     </button>
                 </form>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button type="button" class="auth-btn secondary" onclick="showLogin()">
+                    Back to Login
+                </button>
                 
 
             </div>

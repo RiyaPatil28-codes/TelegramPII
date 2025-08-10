@@ -1210,6 +1210,18 @@ body {
     background: #0077b3;
 }
 
+.auth-btn.secondary {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid #e1e5e9;
+    margin-top: 15px;
+}
+
+.auth-btn.secondary:hover {
+    background: #f8f9fa;
+    border-color: var(--primary-color);
+}
+
 .auth-divider {
     text-align: center;
     margin: 20px 0;
