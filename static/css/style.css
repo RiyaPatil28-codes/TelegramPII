@@ -1367,6 +1367,7 @@ a.auth-btn.secondary:hover {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 1;
 }
 
 .user-avatar, .chat-avatar, .message-avatar, .contact-avatar {
@@ -1436,6 +1437,7 @@ a.auth-btn.secondary:hover {
     font-weight: 500;
     color: #000000;
     letter-spacing: -0.2px;
+    line-height: 1.2;
 }
 
 .status {
