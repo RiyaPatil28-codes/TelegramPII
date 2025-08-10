@@ -3,7 +3,7 @@ from app import app, mongo
 from models import User, Message, Story
 from pii_detector import pii_detector
 import logging
-from bson.objectid import ObjectId
+from bson import ObjectId
 from datetime import datetime
 import base64
 

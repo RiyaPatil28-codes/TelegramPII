@@ -1,4 +1,4 @@
-from bson.objectid import ObjectId
+from bson import ObjectId
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import mongo
@@ -67,6 +67,8 @@ class User:
     
     def check_password(self, password):
         """Check if provided password matches hash"""
+        if self.password_hash is None:
+            return False
         return check_password_hash(self.password_hash, password)
     
     def get_id(self):
