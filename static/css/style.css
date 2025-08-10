@@ -1659,9 +1659,10 @@ a.auth-btn.secondary:hover {
 
 .message {
     display: flex;
-    margin-bottom: 24px;
-    gap: 16px;
+    margin-bottom: 16px;
+    gap: 12px;
     animation: slideIn 0.3s ease-out;
+    align-items: flex-start;
 }
 
 @keyframes slideIn {
@@ -1677,15 +1678,16 @@ a.auth-btn.secondary:hover {
 
 .user-message {
     justify-content: flex-end;
+    flex-direction: row-reverse;
 }
 
 .user-message .message-content {
-    max-width: 75%;
+    max-width: 60%;
     align-items: flex-end;
 }
 
 .bot-message .message-content {
-    max-width: 75%;
+    max-width: 60%;
     align-items: flex-start;
 }
 
@@ -1696,8 +1698,8 @@ a.auth-btn.secondary:hover {
 .message-content {
     display: flex;
     flex-direction: column;
-    flex: none;
-    max-width: 75%;
+    flex: 0 1 auto;
+    max-width: 60%;
 }
 
 .message-bubble {
