@@ -1779,6 +1779,71 @@ a.auth-btn.secondary:hover {
     transform: scale(0.95);
 }
 
+/* PII Warning Styles */
+.pii-warning-container {
+    display: none;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border-top: 1px solid #f39c12;
+    border-bottom: 1px solid #f39c12;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pii-warning-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pii-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.warning-icon {
+    font-size: 18px;
+}
+
+.warning-text {
+    color: #856404;
+    font-size: 14px;
+}
+
+.pii-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pii-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pii-warning-message {
+    color: #856404;
+    font-size: 12px;
+    font-style: italic;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .chat-sidebar {
