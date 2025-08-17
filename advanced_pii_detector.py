@@ -186,13 +186,25 @@ class AdvancedPIIDetector:
         """Setup regex patterns for PII detection"""
         self.pii_patterns = {
             'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            'phone': r'(?:\+91[\-\s]?|0?91[\-\s]?)?[789]\d{9}',
+            # Enhanced phone number patterns - multiple international formats
+            'phone': r'(?:\+?\d{1,4}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}|(?:\+91[\-\s]?|0?91[\-\s]?)?[6789]\d{9}|\+?\d{10,15}',
+            # Enhanced US phone patterns
+            'us_phone': r'\b(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b',
+            # International phone patterns
+            'intl_phone': r'\+\d{1,4}[\s.-]?\d{6,14}\b',
             'aadhar': r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
             'passport': r'\b[A-Z]{1}[0-9]{7}\b',
             'credit_card': r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
             'pan': r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b',
             'ssn': r'\b\d{3}-\d{2}-\d{4}\b',
-            'ip_address': r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+            'ip_address': r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
+            # Enhanced account number patterns
+            'bank_account': r'\b\d{8,17}\b',  # Standard bank account numbers
+            'account_number': r'\b(?:acc(?:ount)?[\s#]*:?[\s]*)?(\d{6,20})\b',
+            'routing_number': r'\b\d{9}\b',  # US routing numbers
+            # Additional financial patterns
+            'iban': r'\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}([A-Z0-9]?){0,16}\b',
+            'swift_code': r'\b[A-Z]{6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3})?\b'
         }
         
     def setup_pii_keywords(self):
@@ -204,12 +216,15 @@ class AdvancedPIIDetector:
                 'date of birth', 'dob', 'birthday', 'age', 'birth date'
             ],
             'contact_info': [
-                'phone', 'mobile', 'contact', 'call me', 'reach me',
+                'phone', 'mobile', 'contact', 'call me', 'reach me', 'telephone', 'cell',
+                'phone number', 'mobile number', 'contact number', 'tel',
                 'email', 'e-mail', 'mail address', 'contact email'
             ],
             'financial': [
                 'account number', 'bank account', 'credit card', 'debit card',
-                'card number', 'cvv', 'pin', 'salary', 'income'
+                'card number', 'cvv', 'pin', 'salary', 'income', 'acc no',
+                'account no', 'bank acc', 'routing number', 'iban', 'swift',
+                'checking account', 'savings account', 'account details'
             ],
             'identification': [
                 'aadhar', 'aadhaar', 'passport', 'driving license', 'dl',
