@@ -164,7 +164,9 @@ class PIIDetectorFrontend {
 
     // Show PII confirmation dialog with enhanced UI
     showPIIConfirmation(message, detectedPII, callback) {
-        const redactedPreview = this.generateRedactedPreview(message, detectedPII);
+        // Filter and simplify PII detections for cleaner display
+        const simplifiedPII = this.filterAndSimplifyPII(detectedPII);
+        const redactedPreview = this.generateRedactedPreview(message, simplifiedPII);
         let selectedRedaction = 'placeholder'; // Default redaction method
         
         const modal = document.createElement('div');
@@ -177,7 +179,7 @@ class PIIDetectorFrontend {
                 </div>
                 <div class="pii-detected-list">
                     <h4 class="pii-section-title">Detected Sensitive Information:</h4>
-                    ${detectedPII.map(pii => `
+                    ${simplifiedPII.map(pii => `
                         <div class="pii-item">
                             <span class="pii-type">${this.formatPIIType(pii.type)}</span>
                             <span class="pii-value">${pii.value}</span>
@@ -265,7 +267,7 @@ class PIIDetectorFrontend {
                 selectedRedaction = choice.dataset.method;
                 
                 // Update preview based on selection
-                this.updateRedactedPreview(message, detectedPII, selectedRedaction, redactedPreviewElement);
+                this.updateRedactedPreview(message, simplifiedPII, selectedRedaction, redactedPreviewElement);
             };
         });
 
@@ -336,6 +338,93 @@ class PIIDetectorFrontend {
         previewElement.innerHTML = redactedMessage;
     }
 
+    // Filter and simplify PII detections for cleaner display
+    filterAndSimplifyPII(detectedPII) {
+        const priorityItems = [];
+        const seenValues = new Set();
+        const seenOverlaps = new Set();
+        
+        // Group phone-related items to handle overlaps
+        const phoneItems = [];
+        const otherItems = [];
+        
+        for (const item of detectedPII) {
+            // Skip exact duplicates
+            if (seenValues.has(item.value)) {
+                continue;
+            }
+            
+            // Check if this is a phone-related detection (require reasonable length)
+            if (item.type.toLowerCase().includes('phone') && item.value.length >= 10) {
+                phoneItems.push(item);
+            } else {
+                otherItems.push(item);
+            }
+        }
+        
+        // Process phone items to remove overlaps (keep longest/most complete numbers)
+        phoneItems.sort((a, b) => b.value.length - a.value.length);
+        for (const phoneItem of phoneItems) {
+            // Check if this phone number is a substring of an already added phone
+            const isOverlap = Array.from(seenOverlaps).some(existing => 
+                phoneItem.value.includes(existing) || existing.includes(phoneItem.value)
+            );
+            
+            if (!isOverlap) {
+                priorityItems.push({
+                    type: 'phone',  // Simplify all phone types to just 'phone'
+                    value: phoneItem.value,
+                    confidence: phoneItem.confidence
+                });
+                seenOverlaps.add(phoneItem.value);
+                seenValues.add(phoneItem.value);
+            }
+        }
+        
+        // Process other items (filter out low-value detections)
+        for (const item of otherItems) {
+            if (seenValues.has(item.value)) {
+                continue;
+            }
+            
+            const itemType = item.type.toLowerCase();
+            
+            // Only include high-value PII types
+            if (['email', 'ssn', 'aadhar', 'passport', 'credit'].some(keyword => itemType.includes(keyword))) {
+                const simplifiedType = itemType.split('_')[0]; // Remove prefixes
+                priorityItems.push({
+                    type: simplifiedType,
+                    value: item.value,
+                    confidence: item.confidence
+                });
+                seenValues.add(item.value);
+            }
+            // Include clear name detections (but not common words)
+            else if (itemType.includes('name') && item.value.length > 3 && 
+                     item.value[0] === item.value[0].toUpperCase() && 
+                     /^[A-Za-z\s]+$/.test(item.value) &&
+                     !['email', 'call', 'phone', 'number', 'name'].includes(item.value.toLowerCase())) {
+                priorityItems.push({
+                    type: 'name',
+                    value: item.value,
+                    confidence: item.confidence
+                });
+                seenValues.add(item.value);
+            }
+            // Include location information
+            else if (itemType.includes('place') || itemType.includes('location')) {
+                priorityItems.push({
+                    type: 'location',
+                    value: item.value,
+                    confidence: item.confidence
+                });
+                seenValues.add(item.value);
+            }
+        }
+        
+        return priorityItems;
+    }
+
     formatPIIType(type) {
         const typeMap = {
             email: 'Email Address',
@@ -344,9 +433,11 @@ class PIIDetectorFrontend {
             passport: 'Passport Number',
             creditCard: 'Credit Card',
             pan: 'PAN Number',
-            name: 'Personal Name'
+            name: 'Personal Name',
+            location: 'Location',
+            ssn: 'Social Security Number'
         };
-        return typeMap[type] || type.toUpperCase();
+        return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
     }
 
     // Send message to backend for comprehensive PII analysis
