@@ -258,8 +258,13 @@ class SimplePIIDetector:
             redacted = redacted.replace(item['value'], placeholder)
         return redacted
 
-# Initialize detector
-pii_detector = SimplePIIDetector()
+# Initialize detector - use unified detector for better phone detection
+try:
+    from pii_integration import unified_detector as pii_detector
+    logger.info("Using unified PII detector with advanced phone detection")
+except ImportError:
+    pii_detector = SimplePIIDetector()
+    logger.warning("Falling back to simple PII detector")
 
 # In-memory storage
 users_db = {
@@ -387,21 +392,21 @@ def detect_pii_api():
                 store_pii_detection(user_id, message, advanced_results)
             
         else:
-            # Fallback to simple detection
-            pii_results = pii_detector.detect_pii(message)
+            # Use unified detector
+            analysis = pii_detector.analyze_message(message)
             
             response = {
                 'message': message,
-                'pii_detected': len(pii_results) > 0,
-                'pii_items': pii_results,
-                'redacted_message': pii_detector.redact_message(message, pii_results),
-                'confidence_score': max([item.get('confidence', 0) for item in pii_results]) if pii_results else 0,
-                'detection_methods': ['regex'],
-                'advanced_detection': False,
+                'pii_detected': analysis['has_pii'],
+                'pii_items': analysis['pii_detected'],
+                'redacted_message': analysis['redacted_message'],
+                'confidence_score': analysis['confidence_score'],
+                'detection_methods': analysis.get('detection_methods', ['regex']),
+                'advanced_detection': analysis.get('advanced_detection', False),
                 'timestamp': datetime.now().isoformat()
             }
             
-            logger.info(f"Simple PII Detection - Items: {len(pii_results)}, "
+            logger.info(f"Unified PII Detection - Items: {len(analysis['pii_detected'])}, "
                        f"Confidence: {response['confidence_score']}")
         
         return jsonify(response)
@@ -425,27 +430,27 @@ def send_message():
             return jsonify({'error': 'Message is required'}), 400
         
         # Detect PII first
-        pii_results = pii_detector.detect_pii(message)
+        analysis = pii_detector.analyze_message(message)
         
         # Store message with PII detection results
         message_doc = {
             'user_id': session['user_id'],
             'bot_id': bot_id,
             'message': message,
-            'pii_detected': len(pii_results) > 0,
-            'pii_items': pii_results,
+            'pii_detected': analysis['has_pii'],
+            'pii_items': analysis['pii_detected'],
             'timestamp': datetime.now().isoformat()
         }
         messages_db.append(message_doc)
         
         # Store PII detection data if any PII was found
-        if len(pii_results) > 0:
+        if analysis['has_pii']:
             pii_result_formatted = {
                 'pii_detected': True,
-                'pii_items': pii_results,
-                'detection_methods': ['regex'],
-                'overall_confidence': max([item.get('confidence', 0) for item in pii_results]) if pii_results else 0,
-                'redacted_text': pii_detector.redact_message(message, pii_results)
+                'pii_items': analysis['pii_detected'],
+                'detection_methods': analysis.get('detection_methods', ['regex']),
+                'overall_confidence': analysis['confidence_score'],
+                'redacted_text': analysis['redacted_message']
             }
             store_pii_detection(session['user_id'], message, pii_result_formatted, bot_id)
         
@@ -463,8 +468,8 @@ def send_message():
             'success': True,
             'message_sent': message,
             'bot_response': bot_responses.get(bot_id, "Thanks for your message!"),
-            'pii_detected': len(pii_results) > 0,
-            'pii_count': len(pii_results),
+            'pii_detected': analysis['has_pii'],
+            'pii_count': len(analysis['pii_detected']),
             'timestamp': datetime.now().isoformat()
         }
         
