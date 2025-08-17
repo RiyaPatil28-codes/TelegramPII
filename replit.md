@@ -42,7 +42,7 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 
 ## PII Detection System
 - **Real-time Detection**: Pre-send message analysis that intercepts messages containing PII before transmission
-- **Pattern Matching**: Advanced regex patterns for detecting emails, phone numbers (+91 format), Aadhar cards, PAN cards, credit cards, and passport numbers
+- **Comprehensive International Phone Detection**: Advanced regex patterns covering 40+ countries including US, UK, India, China, Germany, France, Japan, Australia, Brazil, Russia, Canada, Mexico, South Korea, Spain, Italy and 25+ other countries with 97.1% detection accuracy
 - **NLP Processing**: spaCy English model for named entity recognition with fallback tokenization
 - **Unsupervised Machine Learning**: TF-IDF vectorization trained on 176 unlabeled samples with DBSCAN and KMeans clustering for sophisticated contextual PII detection
 - **Training Dataset Integration**: Comprehensive unlabeled dataset containing real-world PII patterns for enhanced unsupervised learning

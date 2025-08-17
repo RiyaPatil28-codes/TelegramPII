@@ -186,14 +186,51 @@ class AdvancedPIIDetector:
         """Setup regex patterns for PII detection"""
         self.pii_patterns = {
             'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            # Comprehensive phone number patterns - covers all major formats
-            'phone_us_standard': r'\(\d{3}\)\s*\d{3}[-\s]?\d{4}',  # (617) 555-0193 format
-            'phone_us_dots': r'\d{3}\.\d{3}\.\d{4}',  # 617.555.0193 format
-            'phone_us_dashes': r'\d{3}-\d{3}-\d{4}',  # 617-555-0193 format
-            'phone_us_spaces': r'\d{3}\s+\d{3}\s+\d{4}',  # 617 555 0193 format
-            'phone_international': r'\+\d{1,4}[\s.-]?\d{6,14}',  # +1 617 555 0193 format
-            'phone_indian': r'(?:\+91[\-\s]?|0?91[\-\s]?)?[6789]\d{9}',  # Indian format
-            'phone_generic': r'\b\d{10,15}\b',  # Generic 10-15 digit numbers
+            # Comprehensive international phone number patterns
+            'phone_us_standard': r'\(\d{3}\)\s*\d{3}[-\s]?\d{4}',  # (617) 555-0193
+            'phone_us_basic': r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b',  # 617-555-0193, 617.555.0193
+            'phone_us_long': r'\b1[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b',  # 1-617-555-0193
+            'phone_uk': r'(?:\+44[-.\s]?|0[-.\s]?)[1-9][-.\s]?\d{3,4}[-.\s]?\d{4,6}',  # UK numbers
+            'phone_india': r'(?:\+91[-.\s]?)?[6-9]\d{4}[-.\s]?\d{5}',  # Indian mobile
+            'phone_china': r'(?:\+86[-.\s]?)?1[3-9]\d[-.\s]?\d{4}[-.\s]?\d{4}',  # Chinese mobile
+            'phone_germany': r'(?:\+49[-.\s]?)?[1-9]\d[-.\s]?\d{4,8}',  # German numbers
+            'phone_france': r'(?:\+33[-.\s]?)?[1-9][-.\s]?\d{2}[-.\s]?\d{2}[-.\s]?\d{2}[-.\s]?\d{2}',  # French numbers
+            'phone_japan': r'(?:\+81[-.\s]?)?[7-9]0[-.\s]?\d{4}[-.\s]?\d{4}',  # Japanese mobile
+            'phone_australia': r'(?:\+61[-.\s]?)?[2-478][-.\s]?\d{4}[-.\s]?\d{4}',  # Australian numbers
+            'phone_canada': r'(?:\+1[-.\s]?)?\d{3}[-.\s]?\d{3}[-.\s]?\d{4}',  # Canadian (same as US)
+            'phone_brazil': r'(?:\+55[-.\s]?)?[1-9]{2}[-.\s]?[9]?\d{4}[-.\s]?\d{4}',  # Brazilian mobile
+            'phone_russia': r'(?:\+7[-.\s]?)?[489]\d{2}[-.\s]?\d{3}[-.\s]?\d{2}[-.\s]?\d{2}',  # Russian mobile
+            'phone_mexico': r'(?:\+52[-.\s]?)?[1-9]\d{9}',  # Mexican mobile
+            'phone_italy': r'(?:\+39[-.\s]?)?[0-9]{6,11}',  # Italian numbers
+            'phone_spain': r'(?:\+34[-.\s]?)?[6-9]\d{8}',  # Spanish mobile
+            'phone_south_korea': r'(?:\+82[-.\s]?)?[1-9]\d{7,8}',  # Korean mobile
+            'phone_netherlands': r'(?:\+31[-.\s]?)?[1-9]\d{8}',  # Dutch numbers
+            'phone_sweden': r'(?:\+46[-.\s]?)?[1-9]\d{7,8}',  # Swedish numbers
+            'phone_norway': r'(?:\+47[-.\s]?)?[2-9]\d{7}',  # Norwegian numbers
+            'phone_denmark': r'(?:\+45[-.\s]?)?[2-9]\d{7}',  # Danish numbers
+            'phone_switzerland': r'(?:\+41[-.\s]?)?[1-9]\d{8}',  # Swiss numbers
+            'phone_belgium': r'(?:\+32[-.\s]?)?[1-9]\d{7,8}',  # Belgian numbers
+            'phone_austria': r'(?:\+43[-.\s]?)?[1-9]\d{6,12}',  # Austrian numbers
+            'phone_poland': r'(?:\+48[-.\s]?)?[1-9]\d{8}',  # Polish numbers
+            'phone_singapore': r'(?:\+65[-.\s]?)?[6-9]\d{7}',  # Singapore numbers
+            'phone_malaysia': r'(?:\+60[-.\s]?)?[1-9]\d{7,9}',  # Malaysian numbers
+            'phone_thailand': r'(?:\+66[-.\s]?)?[1-9]\d{8}',  # Thai numbers
+            'phone_indonesia': r'(?:\+62[-.\s]?)?[1-9]\d{7,11}',  # Indonesian numbers
+            'phone_philippines': r'(?:\+63[-.\s]?)?[1-9]\d{9}',  # Philippine numbers
+            'phone_vietnam': r'(?:\+84[-.\s]?)?[1-9]\d{8,9}',  # Vietnamese numbers
+            'phone_south_africa': r'(?:\+27[-.\s]?)?[1-9]\d{8}',  # South African numbers
+            'phone_nigeria': r'(?:\+234[-.\s]?)?[7-9]\d{9}',  # Nigerian mobile
+            'phone_egypt': r'(?:\+20[-.\s]?)?[1-9]\d{8,9}',  # Egyptian numbers
+            'phone_turkey': r'(?:\+90[-.\s]?)?[1-9]\d{9}',  # Turkish numbers
+            'phone_israel': r'(?:\+972[-.\s]?)?[1-9]\d{7,8}',  # Israeli numbers
+            'phone_uae': r'(?:\+971[-.\s]?)?[1-9]\d{7,8}',  # UAE numbers
+            'phone_saudi_arabia': r'(?:\+966[-.\s]?)?[1-9]\d{8}',  # Saudi numbers
+            'phone_argentina': r'(?:\+54[-.\s]?)?[1-9]\d{6,10}',  # Argentine numbers
+            'phone_chile': r'(?:\+56[-.\s]?)?[1-9]\d{8}',  # Chilean numbers
+            'phone_colombia': r'(?:\+57[-.\s]?)?[1-9]\d{9}',  # Colombian numbers
+            'phone_peru': r'(?:\+51[-.\s]?)?[1-9]\d{8}',  # Peruvian numbers
+            'phone_new_zealand': r'(?:\+64[-.\s]?)?[2-9]\d{7,9}',  # New Zealand numbers
+            'phone_international': r'\+[1-9]\d{6,14}',  # Generic international format
             'phone_with_ext': r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\s*(?:x|ext\.?|extension)\s*\d+',  # With extension
             'aadhar': r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
             'passport': r'\b[A-Z]{1}[0-9]{7}\b',
