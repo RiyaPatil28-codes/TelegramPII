@@ -362,7 +362,7 @@ class PIIDetectorFrontend {
             }
         }
         
-        // Process phone items to remove overlaps (keep longest/most complete numbers)
+        // Process phone items to remove overlaps and distinguish from account numbers
         phoneItems.sort((a, b) => b.value.length - a.value.length);
         for (const phoneItem of phoneItems) {
             // Check if this phone number is a substring of an already added phone
@@ -371,8 +371,14 @@ class PIIDetectorFrontend {
             );
             
             if (!isOverlap) {
+                // Distinguish between actual phone numbers and account numbers
+                const hasPhoneFormatting = /[\s\-\(\)\+]/.test(phoneItem.value);
+                const isLongDigitsOnly = /^\d{10,}$/.test(phoneItem.value) && !hasPhoneFormatting;
+                
+                const itemType = isLongDigitsOnly ? 'account' : 'phone';
+                
                 priorityItems.push({
-                    type: 'phone',  // Simplify all phone types to just 'phone'
+                    type: itemType,
                     value: phoneItem.value,
                     confidence: phoneItem.confidence
                 });
@@ -411,8 +417,13 @@ class PIIDetectorFrontend {
                 });
                 seenValues.add(item.value);
             }
-            // Include location information
-            else if (itemType.includes('place') || itemType.includes('location')) {
+            // Include location information (but filter out random text)
+            else if ((itemType.includes('place') || itemType.includes('location')) && 
+                     item.value.length <= 25 && // Reasonable location name length
+                     /^[A-Za-z\s\-'\.]+$/.test(item.value) && // Only letters, spaces, hyphens, apostrophes, periods
+                     !item.value.toLowerCase().includes('person') && // Filter out "person is the only way they"
+                     !item.value.toLowerCase().includes('way') &&
+                     !item.value.toLowerCase().includes('only')) {
                 priorityItems.push({
                     type: 'location',
                     value: item.value,
@@ -429,6 +440,7 @@ class PIIDetectorFrontend {
         const typeMap = {
             email: 'Email Address',
             phone: 'Phone Number',
+            account: 'Account Number',
             aadhar: 'Aadhar Number',
             passport: 'Passport Number',
             creditCard: 'Credit Card',
