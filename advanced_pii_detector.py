@@ -186,12 +186,15 @@ class AdvancedPIIDetector:
         """Setup regex patterns for PII detection"""
         self.pii_patterns = {
             'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            # Enhanced phone number patterns - multiple international formats
-            'phone': r'(?:\+?\d{1,4}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}|(?:\+91[\-\s]?|0?91[\-\s]?)?[6789]\d{9}|\+?\d{10,15}',
-            # Enhanced US phone patterns
-            'us_phone': r'\b(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b',
-            # International phone patterns
-            'intl_phone': r'\+\d{1,4}[\s.-]?\d{6,14}\b',
+            # Comprehensive phone number patterns - covers all major formats
+            'phone_us_standard': r'\(\d{3}\)\s*\d{3}[-\s]?\d{4}',  # (617) 555-0193 format
+            'phone_us_dots': r'\d{3}\.\d{3}\.\d{4}',  # 617.555.0193 format
+            'phone_us_dashes': r'\d{3}-\d{3}-\d{4}',  # 617-555-0193 format
+            'phone_us_spaces': r'\d{3}\s+\d{3}\s+\d{4}',  # 617 555 0193 format
+            'phone_international': r'\+\d{1,4}[\s.-]?\d{6,14}',  # +1 617 555 0193 format
+            'phone_indian': r'(?:\+91[\-\s]?|0?91[\-\s]?)?[6789]\d{9}',  # Indian format
+            'phone_generic': r'\b\d{10,15}\b',  # Generic 10-15 digit numbers
+            'phone_with_ext': r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\s*(?:x|ext\.?|extension)\s*\d+',  # With extension
             'aadhar': r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
             'passport': r'\b[A-Z]{1}[0-9]{7}\b',
             'credit_card': r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b',
@@ -217,7 +220,8 @@ class AdvancedPIIDetector:
             ],
             'contact_info': [
                 'phone', 'mobile', 'contact', 'call me', 'reach me', 'telephone', 'cell',
-                'phone number', 'mobile number', 'contact number', 'tel',
+                'phone number', 'mobile number', 'contact number', 'tel', 'text me',
+                'call', 'ring me', 'dial', 'number', 'direct contact', 'personal number',
                 'email', 'e-mail', 'mail address', 'contact email'
             ],
             'financial': [
