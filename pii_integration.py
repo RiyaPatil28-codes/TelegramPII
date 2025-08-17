@@ -28,6 +28,74 @@ class UnifiedPIIDetector:
         else:
             self.use_advanced = False
             logger.info("Initialized with simple regex detection only")
+    
+    def _simplify_pii_types(self, pii_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Simplify PII type names for cleaner user display"""
+        # Priority-based filtering: show only the most important, clear PII items
+        priority_items = []
+        seen_values = set()
+        
+        # Step 1: Find complete, valid phone numbers
+        valid_phones = []
+        for item in pii_items:
+            if 'phone' in item['type'].lower() and len(item['value']) >= 10:
+                # Only include phone numbers that look complete
+                phone_val = item['value'].strip()
+                if ('+' in phone_val or '(' in phone_val or 
+                    len([c for c in phone_val if c.isdigit()]) >= 10):
+                    valid_phones.append({
+                        'type': 'phone',
+                        'value': phone_val,
+                        'confidence': item['confidence']
+                    })
+        
+        # Remove phone number overlaps (keep longest)
+        valid_phones.sort(key=lambda x: len(x['value']), reverse=True)
+        added_phones = set()
+        for phone in valid_phones:
+            is_subset = any(phone['value'] in existing or existing in phone['value'] 
+                          for existing in added_phones)
+            if not is_subset:
+                priority_items.append(phone)
+                added_phones.add(phone['value'])
+                seen_values.add(phone['value'])
+        
+        # Step 2: Add high-confidence, non-phone PII
+        for item in pii_items:
+            if item['value'] in seen_values:
+                continue
+                
+            # Only include high-value PII types (skip low-value spy detections)
+            item_type = item['type'].lower()
+            if any(keyword in item_type for keyword in ['email', 'ssn', 'aadhar', 'passport', 'credit']):
+                simplified_type = item_type.split('_')[0]  # Remove prefixes
+                priority_items.append({
+                    'type': simplified_type,
+                    'value': item['value'],
+                    'confidence': item['confidence']
+                })
+                seen_values.add(item['value'])
+            # Skip all spy detections as they create noise
+            # Include clear name detections (but not common words)
+            elif ('name' in item_type and len(item['value']) > 3 and 
+                  item['value'][0].isupper() and item['value'].isalpha() and
+                  item['value'].lower() not in ['email', 'call', 'phone', 'number', 'name']):
+                priority_items.append({
+                    'type': 'name',
+                    'value': item['value'], 
+                    'confidence': item['confidence']
+                })
+                seen_values.add(item['value'])
+            # Include location information
+            elif ('place' in item_type or 'location' in item_type):
+                priority_items.append({
+                    'type': 'location',
+                    'value': item['value'],
+                    'confidence': item['confidence']
+                })
+                seen_values.add(item['value'])
+        
+        return priority_items
             
     def analyze_message(self, message: str) -> Dict[str, Any]:
         """Analyze message for PII using the best available method"""
@@ -37,10 +105,13 @@ class UnifiedPIIDetector:
                 # Use comprehensive advanced detection
                 result = self.advanced_detector.detect_pii_comprehensive(message)
                 
+                # Simplify PII types for cleaner display
+                simplified_pii_items = self._simplify_pii_types(result['pii_items'])
+                
                 # Transform to expected format
                 return {
                     'has_pii': result['pii_detected'],
-                    'pii_detected': result['pii_items'],
+                    'pii_detected': simplified_pii_items,
                     'redacted_message': result['redacted_text'],
                     'confidence_score': result['overall_confidence'],
                     'detection_methods': result['detection_methods'],
@@ -79,17 +150,20 @@ class UnifiedPIIDetector:
                     'confidence': 0.9
                 })
         
+        # Simplify PII types for cleaner display
+        simplified_pii_items = self._simplify_pii_types(pii_items)
+        
         # Generate redacted message
         redacted = message
-        for item in pii_items:
+        for item in simplified_pii_items:
             placeholder = f"[{item['type'].upper()}_REDACTED]"
             redacted = redacted.replace(item['value'], placeholder)
         
         return {
-            'has_pii': len(pii_items) > 0,
-            'pii_detected': pii_items,
+            'has_pii': len(simplified_pii_items) > 0,
+            'pii_detected': simplified_pii_items,
             'redacted_message': redacted,
-            'confidence_score': max([item['confidence'] for item in pii_items]) if pii_items else 0,
+            'confidence_score': max([item['confidence'] for item in simplified_pii_items]) if simplified_pii_items else 0,
             'detection_methods': ['regex'],
             'advanced_detection': False
         }
