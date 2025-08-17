@@ -1,20 +1,44 @@
 #!/usr/bin/env python3
 """
-Advanced PII Detector with BERT, TF-IDF, and Unsupervised Learning
+Advanced PII Detector with BERT, spaCy, TF-IDF, and Unsupervised Learning
+Complete implementation with fallback handling for missing dependencies
 """
 
 import re
 import logging
 import numpy as np
 from typing import List, Dict, Any, Tuple
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import DBSCAN, KMeans
-from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
-import torch
-from transformers import AutoTokenizer, AutoModel
 import warnings
 warnings.filterwarnings("ignore")
+
+# Try importing advanced ML libraries with fallbacks
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.cluster import DBSCAN, KMeans
+    from sklearn.metrics.pairwise import cosine_similarity
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
+
+try:
+    import nltk
+    from nltk.tokenize import word_tokenize, sent_tokenize
+    from nltk.corpus import stopwords
+    NLTK_AVAILABLE = True
+except ImportError:
+    NLTK_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -26,23 +50,69 @@ class AdvancedPIIDetector:
         self.setup_pii_keywords()
         
     def setup_models(self):
-        """Initialize BERT and sentence transformer models"""
-        try:
-            # Use lightweight BERT model for PII context detection
-            self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
-            logger.info("Loaded sentence transformer model")
-            
-            # TF-IDF vectorizer for text analysis
-            self.tfidf_vectorizer = TfidfVectorizer(
-                max_features=1000,
-                stop_words='english',
-                ngram_range=(1, 3),
-                min_df=1
-            )
-            
-        except Exception as e:
-            logger.warning(f"Model loading error: {e}. Using fallback models.")
+        """Initialize BERT, spaCy, and sentence transformer models"""
+        # Initialize Sentence-BERT model
+        if SENTENCE_TRANSFORMERS_AVAILABLE:
+            try:
+                self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+                logger.info("✓ Loaded Sentence-BERT model (all-MiniLM-L6-v2)")
+            except Exception as e:
+                logger.warning(f"Failed to load Sentence-BERT: {e}")
+                self.sentence_model = None
+        else:
+            logger.warning("Sentence-transformers not available")
             self.sentence_model = None
+            
+        # Initialize spaCy NER model
+        if SPACY_AVAILABLE:
+            try:
+                self.nlp = spacy.load('en_core_web_sm')
+                logger.info("✓ Loaded spaCy NER model (en_core_web_sm)")
+            except Exception as e:
+                logger.warning(f"Failed to load spaCy model: {e}")
+                self.nlp = None
+        else:
+            logger.warning("spaCy not available")
+            self.nlp = None
+            
+        # Initialize TF-IDF and clustering models
+        if SKLEARN_AVAILABLE:
+            try:
+                self.tfidf_vectorizer = TfidfVectorizer(
+                    max_features=1000,
+                    stop_words='english',
+                    ngram_range=(1, 3),
+                    min_df=1
+                )
+                self.dbscan_model = DBSCAN(eps=0.3, min_samples=2, metric='cosine')
+                self.kmeans_model = KMeans(n_clusters=3, random_state=42, n_init=10)
+                logger.info("✓ Loaded scikit-learn models (TF-IDF, DBSCAN, K-Means)")
+            except Exception as e:
+                logger.warning(f"Failed to load scikit-learn models: {e}")
+                self.tfidf_vectorizer = None
+                self.dbscan_model = None
+                self.kmeans_model = None
+        else:
+            logger.warning("scikit-learn not available")
+            self.tfidf_vectorizer = None
+            self.dbscan_model = None
+            self.kmeans_model = None
+            
+        # Initialize NLTK for tokenization
+        if NLTK_AVAILABLE:
+            try:
+                # Download required NLTK data if not present
+                import nltk
+                nltk.download('punkt', quiet=True)
+                nltk.download('stopwords', quiet=True)
+                self.stop_words = set(stopwords.words('english'))
+                logger.info("✓ Loaded NLTK tokenization and stopwords")
+            except Exception as e:
+                logger.warning(f"Failed to setup NLTK: {e}")
+                self.stop_words = {'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        else:
+            logger.warning("NLTK not available")
+            self.stop_words = {'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
             
     def setup_patterns(self):
         """Setup regex patterns for PII detection"""
@@ -101,37 +171,54 @@ class AdvancedPIIDetector:
                 
         return detected
     
-    def detect_pii_contextual(self, text: str) -> List[Dict[str, Any]]:
-        """Detect PII using contextual keyword analysis"""
-        detected = []
-        words = text.lower().split()
-        
-        for category, keywords in self.pii_keywords.items():
-            for keyword in keywords:
-                if keyword in text.lower():
-                    # Look for potential PII values near keywords
-                    keyword_pos = text.lower().find(keyword)
-                    context_window = text[max(0, keyword_pos-20):keyword_pos+50]
+    def detect_pii_spacy_ner(self, text: str) -> List[Dict[str, Any]]:
+        """Detect PII using spaCy Named Entity Recognition"""
+        if not self.nlp:
+            return []
+            
+        try:
+            detected = []
+            doc = self.nlp(text)
+            
+            for ent in doc.ents:
+                # Map spaCy entity types to PII types
+                if ent.label_ in ['PERSON', 'ORG', 'GPE', 'DATE', 'MONEY', 'CARDINAL', 'TIME']:
+                    confidence = 0.7
+                    pii_type = ent.label_.lower()
                     
-                    # Extract potential PII values (alphanumeric sequences)
-                    potential_values = re.findall(r'\b[\w@.-]+\b', context_window)
+                    # Adjust confidence based on entity type
+                    if ent.label_ == 'PERSON':
+                        confidence = 0.85
+                        pii_type = 'name'
+                    elif ent.label_ == 'GPE':  # Geopolitical entity (locations)
+                        confidence = 0.75
+                        pii_type = 'location'
+                    elif ent.label_ == 'DATE':
+                        confidence = 0.6
+                        pii_type = 'date'
+                    elif ent.label_ == 'MONEY':
+                        confidence = 0.8
+                        pii_type = 'financial'
                     
-                    for value in potential_values:
-                        if len(value) > 3 and value.lower() != keyword:
-                            detected.append({
-                                'type': f'contextual_{category}',
-                                'value': value,
-                                'confidence': 0.6,
-                                'method': 'contextual',
-                                'keyword': keyword,
-                                'context': context_window.strip()
-                            })
-                            
-        return detected
+                    detected.append({
+                        'type': pii_type,
+                        'value': ent.text,
+                        'confidence': confidence,
+                        'method': 'spacy_ner',
+                        'spacy_label': ent.label_,
+                        'start_pos': ent.start_char,
+                        'end_pos': ent.end_char
+                    })
+                    
+            return detected
+            
+        except Exception as e:
+            logger.warning(f"spaCy NER error: {e}")
+            return []
     
     def detect_pii_bert_clustering(self, text: str) -> List[Dict[str, Any]]:
         """Detect PII using BERT embeddings and unsupervised clustering"""
-        if not self.sentence_model:
+        if not self.sentence_model or not SKLEARN_AVAILABLE:
             return []
             
         try:
@@ -146,8 +233,7 @@ class AdvancedPIIDetector:
             embeddings = self.sentence_model.encode(sentences)
             
             # Use DBSCAN for clustering potentially sensitive sentences
-            clustering = DBSCAN(eps=0.3, min_samples=1, metric='cosine')
-            clusters = clustering.fit_predict(embeddings)
+            clusters = self.dbscan_model.fit_predict(embeddings)
             
             # Analyze clusters for PII patterns
             for i, cluster_id in enumerate(clusters):
@@ -205,208 +291,254 @@ class AdvancedPIIDetector:
                     
         return detected
     
-    def detect_pii_tfidf_anomaly(self, text: str, corpus: List[str] = None) -> List[Dict[str, Any]]:
-        """Detect PII using TF-IDF anomaly detection"""
+    def detect_pii_tfidf_clustering(self, text: str) -> List[Dict[str, Any]]:
+        """Detect PII using TF-IDF vectorization and clustering"""
+        if not self.tfidf_vectorizer or not SKLEARN_AVAILABLE:
+            return []
+            
         try:
             detected = []
             
-            # Create corpus for comparison (use common non-PII text if no corpus provided)
-            if not corpus:
-                corpus = [
-                    "Hello how are you doing today",
-                    "The weather is nice outside",
-                    "I like reading books and watching movies",
-                    "Thank you for your help",
-                    "Have a great day ahead"
-                ]
+            # Split text into sentences
+            if NLTK_AVAILABLE:
+                try:
+                    sentences = sent_tokenize(text)
+                except:
+                    sentences = text.split('. ')
+            else:
+                sentences = text.split('. ')
+                
+            if len(sentences) < 2:
+                return detected
+                
+            # Create PII keyword corpus for comparison
+            pii_keyword_list = []
+            for category, keywords in self.pii_keywords.items():
+                pii_keyword_list.extend(keywords)
+                
+            # Combine sentences with PII keywords for vectorization
+            all_texts = sentences + pii_keyword_list
             
-            # Add current text to corpus
-            all_texts = corpus + [text]
-            
-            # Fit TF-IDF vectorizer
+            # Create TF-IDF vectors
             tfidf_matrix = self.tfidf_vectorizer.fit_transform(all_texts)
             
-            # Get TF-IDF scores for the input text (last item)
-            text_vector = tfidf_matrix[-1]
-            feature_names = self.tfidf_vectorizer.get_feature_names_out()
+            # Calculate similarity between sentences and PII keywords
+            sentence_vectors = tfidf_matrix[:len(sentences)]
+            keyword_vectors = tfidf_matrix[len(sentences):]
             
-            # Find high-scoring terms that might indicate PII
-            text_scores = text_vector.toarray()[0]
-            high_score_indices = np.where(text_scores > 0.1)[0]  # Threshold for significance
+            similarities = cosine_similarity(sentence_vectors, keyword_vectors)
             
-            for idx in high_score_indices:
-                term = feature_names[idx]
-                score = text_scores[idx]
+            # Find sentences with high similarity to PII keywords
+            for i, sentence in enumerate(sentences):
+                max_similarity = np.max(similarities[i])
                 
-                # Check if high-scoring term matches PII patterns
-                if self._is_potential_pii_term(term, score):
-                    detected.append({
-                        'type': 'anomaly_term',
-                        'value': term,
-                        'confidence': min(0.9, score * 1.2),
-                        'method': 'tfidf_anomaly',
-                        'tfidf_score': score
-                    })
-                    
+                if max_similarity > 0.3:  # Threshold for PII likelihood
+                    # Extract potential PII from high-similarity sentences
+                    words = sentence.split()
+                    for word in words:
+                        if len(word) > 3 and word.isalnum():
+                            # Check if word could be PII
+                            word_similarity = self._calculate_word_pii_similarity(word)
+                            if word_similarity > 0.4:
+                                detected.append({
+                                    'type': 'clustered_pii',
+                                    'value': word,
+                                    'confidence': max_similarity * 0.8,
+                                    'method': 'tfidf_clustering',
+                                    'similarity_score': word_similarity
+                                })
+                                        
             return detected
             
         except Exception as e:
-            logger.warning(f"TF-IDF anomaly detection error: {e}")
+            logger.warning(f"TF-IDF clustering error: {e}")
             return []
     
-    def _is_potential_pii_term(self, term: str, tfidf_score: float) -> bool:
-        """Check if a term with high TF-IDF score is potentially PII"""
-        # Check against known PII patterns
-        for pattern in self.pii_patterns.values():
-            if re.match(pattern, term, re.IGNORECASE):
-                return True
-                
-        # Check for numeric sequences (potential IDs, phone numbers, etc.)
-        if re.match(r'^\d+$', term) and len(term) >= 6:
-            return True
+    def _calculate_word_pii_similarity(self, word: str) -> float:
+        """Calculate similarity between a word and PII patterns"""
+        # Simple heuristics for PII likelihood
+        pii_score = 0.0
+        
+        # Check if word is capitalized (potential name)
+        if word[0].isupper() and len(word) > 2:
+            pii_score += 0.3
             
-        # Check for email-like patterns
-        if '@' in term or '.' in term:
-            return True
+        # Check if word contains numbers (potential ID)
+        if any(c.isdigit() for c in word):
+            pii_score += 0.4
             
-        # Check for capitalized sequences (potential names)
-        if re.match(r'^[A-Z][a-z]+$', term) and tfidf_score > 0.3:
-            return True
+        # Check if word contains special characters (potential email, phone)
+        if any(c in word for c in '@.-_'):
+            pii_score += 0.5
             
-        return False
+        # Check length patterns
+        if len(word) in [10, 12, 16]:  # Common ID lengths
+            pii_score += 0.3
+            
+        return min(pii_score, 1.0)
     
-    def comprehensive_pii_detection(self, text: str, corpus: List[str] = None) -> Dict[str, Any]:
-        """Run comprehensive PII detection using all methods"""
+    def detect_pii_contextual(self, text: str) -> List[Dict[str, Any]]:
+        """Detect PII using contextual keyword analysis"""
+        detected = []
+        
+        for category, keywords in self.pii_keywords.items():
+            for keyword in keywords:
+                if keyword in text.lower():
+                    # Look for potential PII values near keywords
+                    keyword_pos = text.lower().find(keyword)
+                    context_window = text[max(0, keyword_pos-20):keyword_pos+50]
+                    
+                    # Extract potential PII values (alphanumeric sequences)
+                    potential_values = re.findall(r'\b[\w@.-]+\b', context_window)
+                    
+                    for value in potential_values:
+                        if len(value) > 3 and value.lower() != keyword:
+                            detected.append({
+                                'type': f'contextual_{category}',
+                                'value': value,
+                                'confidence': 0.6,
+                                'method': 'contextual',
+                                'keyword': keyword,
+                                'context': context_window.strip()
+                            })
+                            
+        return detected
+    
+    def redact_pii(self, text: str, pii_items: List[Dict[str, Any]]) -> str:
+        """Redact detected PII from text"""
+        redacted_text = text
+        
+        # Sort PII items by position (if available) to avoid overlapping replacements
+        sorted_items = sorted(pii_items, key=lambda x: x.get('start_pos', 0), reverse=True)
+        
+        for item in sorted_items:
+            pii_type = item['type'].upper()
+            placeholder = f"[{pii_type}_REDACTED]"
+            
+            # Use position-based replacement if available
+            if 'start_pos' in item and 'end_pos' in item:
+                start = item['start_pos']
+                end = item['end_pos']
+                redacted_text = redacted_text[:start] + placeholder + redacted_text[end:]
+            else:
+                # Fallback to string replacement
+                redacted_text = redacted_text.replace(item['value'], placeholder)
+                
+        return redacted_text
+    
+    def detect_pii_comprehensive(self, text: str) -> Dict[str, Any]:
+        """Comprehensive PII detection using all available methods"""
         all_detected = []
+        detection_methods = []
         
-        # Method 1: Regex-based detection (high precision)
+        # 1. Regex-based detection
         regex_results = self.detect_pii_regex(text)
-        all_detected.extend(regex_results)
-        
-        # Method 2: Contextual keyword detection
+        if regex_results:
+            all_detected.extend(regex_results)
+            detection_methods.append('regex')
+            
+        # 2. spaCy NER detection
+        if self.nlp:
+            ner_results = self.detect_pii_spacy_ner(text)
+            if ner_results:
+                all_detected.extend(ner_results)
+                detection_methods.append('spacy_ner')
+                
+        # 3. Contextual keyword detection
         contextual_results = self.detect_pii_contextual(text)
-        all_detected.extend(contextual_results)
-        
-        # Method 3: BERT clustering (if available)
+        if contextual_results:
+            all_detected.extend(contextual_results)
+            detection_methods.append('contextual')
+            
+        # 4. BERT clustering detection
         if self.sentence_model:
             bert_results = self.detect_pii_bert_clustering(text)
-            all_detected.extend(bert_results)
+            if bert_results:
+                all_detected.extend(bert_results)
+                detection_methods.append('bert_clustering')
+                
+        # 5. TF-IDF clustering detection
+        if self.tfidf_vectorizer:
+            tfidf_results = self.detect_pii_tfidf_clustering(text)
+            if tfidf_results:
+                all_detected.extend(tfidf_results)
+                detection_methods.append('tfidf_clustering')
         
-        # Method 4: TF-IDF anomaly detection
-        tfidf_results = self.detect_pii_tfidf_anomaly(text, corpus)
-        all_detected.extend(tfidf_results)
+        # Remove duplicates and calculate overall confidence
+        unique_items = self._deduplicate_pii_items(all_detected)
+        overall_confidence = self._calculate_overall_confidence(unique_items)
         
-        # Deduplicate and consolidate results
-        consolidated_results = self._consolidate_detections(all_detected)
-        
-        # Calculate overall confidence score
-        overall_confidence = self._calculate_overall_confidence(consolidated_results)
+        # Generate redacted text
+        redacted_text = self.redact_pii(text, unique_items)
         
         return {
-            'text': text,
-            'pii_detected': len(consolidated_results) > 0,
-            'pii_items': consolidated_results,
-            'detection_methods': self._get_methods_used(consolidated_results),
+            'pii_detected': len(unique_items) > 0,
+            'pii_items': unique_items,
+            'detection_methods': detection_methods,
             'overall_confidence': overall_confidence,
-            'redacted_text': self._redact_text(text, consolidated_results)
+            'redacted_text': redacted_text,
+            'original_text': text,
+            'total_methods_used': len(detection_methods)
         }
     
-    def _consolidate_detections(self, detections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Consolidate overlapping detections and remove duplicates"""
-        if not detections:
-            return []
-            
-        consolidated = []
-        seen_values = set()
+    def _deduplicate_pii_items(self, pii_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Remove duplicate PII items based on value and type"""
+        seen = set()
+        unique_items = []
         
-        # Sort by confidence (highest first)
-        sorted_detections = sorted(detections, key=lambda x: x.get('confidence', 0), reverse=True)
-        
-        for detection in sorted_detections:
-            value = detection['value'].lower().strip()
-            
-            # Skip if already seen (avoid duplicates)
-            if value in seen_values:
-                continue
+        for item in pii_items:
+            key = (item['value'].lower(), item['type'])
+            if key not in seen:
+                seen.add(key)
+                unique_items.append(item)
                 
-            # Skip very short or common values
-            if len(value) < 3 or value in ['the', 'and', 'for', 'you', 'are']:
-                continue
-                
-            seen_values.add(value)
-            consolidated.append(detection)
-            
-        return consolidated
+        return unique_items
     
-    def _calculate_overall_confidence(self, detections: List[Dict[str, Any]]) -> float:
-        """Calculate overall confidence score for PII detection"""
-        if not detections:
+    def _calculate_overall_confidence(self, pii_items: List[Dict[str, Any]]) -> float:
+        """Calculate overall confidence score"""
+        if not pii_items:
             return 0.0
             
-        # Weight confidence scores by detection method reliability
+        # Weight confidence by detection method
         method_weights = {
             'regex': 1.0,
+            'spacy_ner': 0.9,
             'contextual': 0.7,
-            'bert_ner': 0.8,
-            'bert_location': 0.6,
-            'tfidf_anomaly': 0.5
+            'bert_clustering': 0.8,
+            'tfidf_clustering': 0.6
         }
         
-        weighted_scores = []
-        for detection in detections:
-            method = detection.get('method', 'unknown')
-            confidence = detection.get('confidence', 0)
+        total_weighted_confidence = 0.0
+        total_weight = 0.0
+        
+        for item in pii_items:
+            method = item.get('method', 'unknown')
             weight = method_weights.get(method, 0.5)
-            weighted_scores.append(confidence * weight)
+            confidence = item.get('confidence', 0.0)
             
-        return min(0.95, np.mean(weighted_scores))
-    
-    def _get_methods_used(self, detections: List[Dict[str, Any]]) -> List[str]:
-        """Get list of detection methods used"""
-        methods = set()
-        for detection in detections:
-            methods.add(detection.get('method', 'unknown'))
-        return list(methods)
-    
-    def _redact_text(self, text: str, detections: List[Dict[str, Any]]) -> str:
-        """Redact PII from text"""
-        redacted = text
-        
-        # Sort by position to avoid offset issues
-        sorted_detections = sorted(
-            [d for d in detections if 'start_pos' in d], 
-            key=lambda x: x.get('start_pos', 0), 
-            reverse=True
-        )
-        
-        # Redact using placeholders
-        for detection in sorted_detections:
-            value = detection['value']
-            pii_type = detection['type']
-            placeholder = f"[{pii_type.upper()}_REDACTED]"
-            redacted = redacted.replace(value, placeholder)
+            total_weighted_confidence += confidence * weight
+            total_weight += weight
             
-        return redacted
+        return total_weighted_confidence / total_weight if total_weight > 0 else 0.0
 
-# Global instance
-advanced_detector = AdvancedPIIDetector()
 
-def detect_pii_advanced(text: str, corpus: List[str] = None) -> Dict[str, Any]:
+# Main function for integration with the Flask app
+def detect_pii_advanced(text: str) -> Dict[str, Any]:
     """Main function to detect PII using advanced methods"""
-    return advanced_detector.comprehensive_pii_detection(text, corpus)
-
-if __name__ == "__main__":
-    # Test the advanced PII detector
-    test_text = "Hi, I'm John Smith from Mumbai. My email is john.smith@gmail.com and phone is 9876543210. My Aadhar is 1234-5678-9012."
-    
-    result = detect_pii_advanced(test_text)
-    
-    print("Advanced PII Detection Results:")
-    print(f"Text: {result['text']}")
-    print(f"PII Detected: {result['pii_detected']}")
-    print(f"Overall Confidence: {result['overall_confidence']:.2f}")
-    print(f"Methods Used: {result['detection_methods']}")
-    print(f"Redacted Text: {result['redacted_text']}")
-    print("\nDetected PII Items:")
-    for item in result['pii_items']:
-        print(f"  - {item['type']}: {item['value']} (confidence: {item['confidence']:.2f}, method: {item['method']})")
+    try:
+        detector = AdvancedPIIDetector()
+        return detector.detect_pii_comprehensive(text)
+    except Exception as e:
+        logger.error(f"Advanced PII detection failed: {e}")
+        # Fallback to basic regex detection
+        detector = AdvancedPIIDetector()
+        regex_results = detector.detect_pii_regex(text)
+        return {
+            'pii_detected': len(regex_results) > 0,
+            'pii_items': regex_results,
+            'detection_methods': ['regex_fallback'],
+            'overall_confidence': max([item.get('confidence', 0) for item in regex_results]) if regex_results else 0,
+            'redacted_text': detector.redact_pii(text, regex_results),
+            'original_text': text,
+            'total_methods_used': 1
+        }
