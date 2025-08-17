@@ -11,6 +11,13 @@ from typing import List, Dict, Any, Tuple
 import warnings
 warnings.filterwarnings("ignore")
 
+# Import training dataset
+try:
+    from pii_training_dataset import get_training_corpus, get_sensitive_patterns, get_pii_keywords
+    TRAINING_DATASET_AVAILABLE = True
+except ImportError:
+    TRAINING_DATASET_AVAILABLE = False
+
 # Try importing advanced ML libraries with fallbacks
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -75,28 +82,49 @@ class AdvancedPIIDetector:
             logger.warning("spaCy not available")
             self.nlp = None
             
-        # Initialize TF-IDF and clustering models
+        # Initialize TF-IDF and clustering models with training data
         if SKLEARN_AVAILABLE:
             try:
                 self.tfidf_vectorizer = TfidfVectorizer(
-                    max_features=1000,
+                    max_features=1500,
                     stop_words='english',
                     ngram_range=(1, 3),
-                    min_df=1
+                    min_df=1,
+                    max_df=0.8
                 )
-                self.dbscan_model = DBSCAN(eps=0.3, min_samples=2, metric='cosine')
-                self.kmeans_model = KMeans(n_clusters=3, random_state=42, n_init=10)
+                
+                # Train TF-IDF on unlabeled dataset if available
+                if TRAINING_DATASET_AVAILABLE:
+                    training_corpus = get_training_corpus()
+                    self.tfidf_vectorizer.fit(training_corpus)
+                    logger.info(f"✓ Trained TF-IDF vectorizer on {len(training_corpus)} unlabeled samples")
+                    
+                    # Store training vectors for similarity comparison
+                    self.training_vectors = self.tfidf_vectorizer.transform(training_corpus)
+                    
+                    # Store sensitive patterns for clustering reference
+                    self.sensitive_patterns = get_sensitive_patterns()
+                    self.pii_keywords_extended = get_pii_keywords()
+                else:
+                    self.training_vectors = None
+                    self.sensitive_patterns = []
+                    self.pii_keywords_extended = []
+                
+                self.dbscan_model = DBSCAN(eps=0.4, min_samples=2, metric='cosine')
+                self.kmeans_model = KMeans(n_clusters=5, random_state=42, n_init=10)
                 logger.info("✓ Loaded scikit-learn models (TF-IDF, DBSCAN, K-Means)")
             except Exception as e:
                 logger.warning(f"Failed to load scikit-learn models: {e}")
                 self.tfidf_vectorizer = None
                 self.dbscan_model = None
                 self.kmeans_model = None
+                self.training_vectors = None
         else:
             logger.warning("scikit-learn not available")
             self.tfidf_vectorizer = None
             self.dbscan_model = None
             self.kmeans_model = None
+            self.training_vectors = None
             
         # Initialize NLTK for tokenization
         if NLTK_AVAILABLE:
@@ -292,7 +320,7 @@ class AdvancedPIIDetector:
         return detected
     
     def detect_pii_tfidf_clustering(self, text: str) -> List[Dict[str, Any]]:
-        """Detect PII using TF-IDF vectorization and clustering"""
+        """Enhanced TF-IDF clustering with pre-trained unsupervised model"""
         if not self.tfidf_vectorizer or not SKLEARN_AVAILABLE:
             return []
             
@@ -308,51 +336,161 @@ class AdvancedPIIDetector:
             else:
                 sentences = text.split('. ')
                 
-            if len(sentences) < 2:
+            if len(sentences) == 0:
                 return detected
                 
-            # Create PII keyword corpus for comparison
-            pii_keyword_list = []
-            for category, keywords in self.pii_keywords.items():
-                pii_keyword_list.extend(keywords)
+            # Transform input sentences using pre-trained TF-IDF
+            sentence_vectors = self.tfidf_vectorizer.transform(sentences)
+            
+            # Method 1: Compare with training corpus if available
+            if self.training_vectors is not None:
+                # Calculate similarity with training data
+                training_similarities = cosine_similarity(sentence_vectors, self.training_vectors)
+                max_training_similarities = np.max(training_similarities, axis=1)
                 
-            # Combine sentences with PII keywords for vectorization
-            all_texts = sentences + pii_keyword_list
+                for i, sentence in enumerate(sentences):
+                    similarity_score = max_training_similarities[i]
+                    
+                    if similarity_score > 0.25:  # Lower threshold for trained model
+                        # Apply clustering to identify PII patterns
+                        sentence_features = sentence_vectors[i:i+1]
+                        
+                        # Use K-means to find closest cluster center
+                        if len(sentences) > 1:
+                            all_vectors = np.vstack([sentence_vectors.toarray(), 
+                                                   self.training_vectors[:50].toarray()])  # Sample training data
+                            
+                            clusters = self.kmeans_model.fit_predict(all_vectors)
+                            sentence_cluster = clusters[i]
+                            
+                            # Check if sentence clusters with PII-like training data
+                            training_clusters = clusters[len(sentences):]
+                            cluster_pii_likelihood = self._calculate_cluster_pii_likelihood(
+                                sentence_cluster, training_clusters
+                            )
+                            
+                            if cluster_pii_likelihood > 0.3:
+                                # Extract potential PII from sentence
+                                pii_candidates = self._extract_pii_candidates_from_sentence(
+                                    sentence, similarity_score, cluster_pii_likelihood
+                                )
+                                detected.extend(pii_candidates)
             
-            # Create TF-IDF vectors
-            tfidf_matrix = self.tfidf_vectorizer.fit_transform(all_texts)
-            
-            # Calculate similarity between sentences and PII keywords
-            sentence_vectors = tfidf_matrix[:len(sentences)]
-            keyword_vectors = tfidf_matrix[len(sentences):]
-            
-            similarities = cosine_similarity(sentence_vectors, keyword_vectors)
-            
-            # Find sentences with high similarity to PII keywords
-            for i, sentence in enumerate(sentences):
-                max_similarity = np.max(similarities[i])
+            # Method 2: Keyword-based clustering for fallback
+            if len(detected) == 0 and len(sentences) >= 2:
+                # Use extended PII keywords from training dataset
+                pii_keywords = (list(self.pii_keywords_extended) if self.pii_keywords_extended 
+                              else [kw for kwlist in self.pii_keywords.values() for kw in kwlist])
                 
-                if max_similarity > 0.3:  # Threshold for PII likelihood
-                    # Extract potential PII from high-similarity sentences
-                    words = sentence.split()
-                    for word in words:
-                        if len(word) > 3 and word.isalnum():
-                            # Check if word could be PII
-                            word_similarity = self._calculate_word_pii_similarity(word)
-                            if word_similarity > 0.4:
-                                detected.append({
-                                    'type': 'clustered_pii',
-                                    'value': word,
-                                    'confidence': max_similarity * 0.8,
-                                    'method': 'tfidf_clustering',
-                                    'similarity_score': word_similarity
-                                })
-                                        
+                # Create keyword vectors
+                keyword_vectors = self.tfidf_vectorizer.transform(pii_keywords)
+                
+                # Calculate similarities
+                keyword_similarities = cosine_similarity(sentence_vectors, keyword_vectors)
+                max_keyword_similarities = np.max(keyword_similarities, axis=1)
+                
+                # Apply DBSCAN clustering to sentences
+                if sentence_vectors.shape[0] > 1:
+                    clusters = self.dbscan_model.fit_predict(sentence_vectors.toarray())
+                    
+                    for i, sentence in enumerate(sentences):
+                        if (max_keyword_similarities[i] > 0.2 and 
+                            clusters[i] != -1):  # Not noise cluster
+                            
+                            # Extract PII candidates with clustering confidence
+                            confidence_boost = min(max_keyword_similarities[i] * 1.2, 0.9)
+                            candidates = self._extract_pii_candidates_from_sentence(
+                                sentence, max_keyword_similarities[i], confidence_boost
+                            )
+                            detected.extend(candidates)
+                            
             return detected
             
         except Exception as e:
-            logger.warning(f"TF-IDF clustering error: {e}")
+            logger.warning(f"Enhanced TF-IDF clustering error: {e}")
             return []
+    
+    def _calculate_cluster_pii_likelihood(self, sentence_cluster: int, training_clusters: np.ndarray) -> float:
+        """Calculate likelihood that a cluster contains PII based on training data"""
+        if len(training_clusters) == 0:
+            return 0.0
+            
+        # Count how many training samples are in the same cluster
+        same_cluster_count = np.sum(training_clusters == sentence_cluster)
+        total_training_samples = len(training_clusters)
+        
+        # Higher likelihood if more training samples share the cluster
+        likelihood = same_cluster_count / total_training_samples
+        return min(likelihood * 2.0, 1.0)  # Boost and cap at 1.0
+    
+    def _extract_pii_candidates_from_sentence(self, sentence: str, similarity_score: float, 
+                                            confidence_boost: float) -> List[Dict[str, Any]]:
+        """Extract PII candidates from a sentence with clustering analysis"""
+        candidates = []
+        words = sentence.split()
+        
+        for word in words:
+            if len(word) <= 2:
+                continue
+                
+            # Calculate word-level PII likelihood
+            word_pii_score = self._calculate_word_pii_similarity(word)
+            
+            # Enhanced scoring with clustering information
+            combined_confidence = (word_pii_score * 0.4 + 
+                                 similarity_score * 0.3 + 
+                                 confidence_boost * 0.3)
+            
+            if combined_confidence > 0.35:
+                # Determine PII type based on word characteristics
+                pii_type = self._classify_pii_type_advanced(word, sentence)
+                
+                candidates.append({
+                    'type': f'ml_clustered_{pii_type}',
+                    'value': word,
+                    'confidence': min(combined_confidence, 0.85),
+                    'method': 'tfidf_clustering_trained',
+                    'similarity_score': similarity_score,
+                    'clustering_boost': confidence_boost,
+                    'context': sentence[:50] + '...' if len(sentence) > 50 else sentence
+                })
+                
+        return candidates
+    
+    def _classify_pii_type_advanced(self, word: str, context: str) -> str:
+        """Classify PII type using advanced heuristics"""
+        word_lower = word.lower()
+        context_lower = context.lower()
+        
+        # Email patterns
+        if '@' in word or 'email' in context_lower:
+            return 'email'
+        
+        # Phone patterns  
+        if (any(c.isdigit() for c in word) and len(word) >= 8) or 'phone' in context_lower:
+            return 'phone'
+            
+        # Name patterns
+        if (word[0].isupper() and word.isalpha() and 
+            any(indicator in context_lower for indicator in ['name', 'called', 'mr', 'ms', 'dr'])):
+            return 'name'
+            
+        # Location patterns
+        if (word[0].isupper() and 
+            any(indicator in context_lower for indicator in ['live', 'from', 'in', 'at', 'city', 'state'])):
+            return 'location'
+            
+        # Financial patterns
+        if (any(c.isdigit() for c in word) and 
+            any(indicator in context_lower for indicator in ['account', 'card', 'bank', 'pay'])):
+            return 'financial'
+            
+        # ID patterns
+        if (any(c.isdigit() for c in word) and len(word) >= 6 and
+            any(indicator in context_lower for indicator in ['id', 'number', 'license', 'passport'])):
+            return 'identification'
+            
+        return 'personal_info'
     
     def _calculate_word_pii_similarity(self, word: str) -> float:
         """Calculate similarity between a word and PII patterns"""
