@@ -11,12 +11,22 @@ from typing import List, Dict, Any, Tuple
 import warnings
 warnings.filterwarnings("ignore")
 
-# Import training dataset
+# Import training datasets
 try:
     from pii_training_dataset import get_training_corpus, get_sensitive_patterns, get_pii_keywords
     TRAINING_DATASET_AVAILABLE = True
 except ImportError:
     TRAINING_DATASET_AVAILABLE = False
+
+# Import SPY dataset integration
+try:
+    from spy_dataset_integration import (
+        get_enhanced_training_corpus, get_pii_entity_types, 
+        get_context_patterns, create_training_samples, get_spy_dataset_info
+    )
+    SPY_DATASET_AVAILABLE = True
+except ImportError:
+    SPY_DATASET_AVAILABLE = False
 
 # Try importing advanced ML libraries with fallbacks
 try:
@@ -93,22 +103,52 @@ class AdvancedPIIDetector:
                     max_df=0.8
                 )
                 
-                # Train TF-IDF on unlabeled dataset if available
+                # Train TF-IDF on combined datasets if available
+                training_corpus = []
+                
+                # Add base training dataset
                 if TRAINING_DATASET_AVAILABLE:
-                    training_corpus = get_training_corpus()
-                    self.tfidf_vectorizer.fit(training_corpus)
-                    logger.info(f"✓ Trained TF-IDF vectorizer on {len(training_corpus)} unlabeled samples")
-                    
-                    # Store training vectors for similarity comparison
-                    self.training_vectors = self.tfidf_vectorizer.transform(training_corpus)
-                    
-                    # Store sensitive patterns for clustering reference
+                    training_corpus.extend(get_training_corpus())
                     self.sensitive_patterns = get_sensitive_patterns()
                     self.pii_keywords_extended = get_pii_keywords()
                 else:
-                    self.training_vectors = None
                     self.sensitive_patterns = []
                     self.pii_keywords_extended = []
+                
+                # Add enhanced SPY dataset
+                if SPY_DATASET_AVAILABLE:
+                    training_corpus.extend(get_enhanced_training_corpus())
+                    self.enhanced_pii_entities = get_pii_entity_types()
+                    self.context_patterns = get_context_patterns()
+                    
+                    # Generate additional samples for larger training set
+                    additional_samples = create_training_samples(500)
+                    training_corpus.extend(additional_samples)
+                    
+                    spy_info = get_spy_dataset_info()
+                    logger.info(f"✓ Integrated SPY dataset with {spy_info['total_entities']} PII entity types")
+                else:
+                    self.enhanced_pii_entities = []
+                    self.context_patterns = []
+                
+                if training_corpus:
+                    # Remove duplicates while preserving order
+                    seen = set()
+                    unique_corpus = []
+                    for item in training_corpus:
+                        if item not in seen:
+                            seen.add(item)
+                            unique_corpus.append(item)
+                    
+                    self.tfidf_vectorizer.fit(unique_corpus)
+                    logger.info(f"✓ Trained TF-IDF vectorizer on {len(unique_corpus)} combined unlabeled samples")
+                    
+                    # Store training vectors for similarity comparison
+                    self.training_vectors = self.tfidf_vectorizer.transform(unique_corpus)
+                    self.training_corpus = unique_corpus
+                else:
+                    self.training_vectors = None
+                    self.training_corpus = []
                 
                 self.dbscan_model = DBSCAN(eps=0.4, min_samples=2, metric='cosine')
                 self.kmeans_model = KMeans(n_clusters=5, random_state=42, n_init=10)
@@ -180,6 +220,17 @@ class AdvancedPIIDetector:
                 'state', 'country', 'locality', 'area', 'neighborhood'
             ]
         }
+        
+        # Add SPY dataset enhanced keywords if available
+        if hasattr(self, 'enhanced_pii_entities') and self.enhanced_pii_entities:
+            # Add SPY entity types as contextual keywords
+            self.pii_keywords['spy_entities'] = [
+                entity.lower().replace('_', ' ') for entity in self.enhanced_pii_entities
+            ]
+            
+        if hasattr(self, 'context_patterns') and self.context_patterns:
+            # Add context patterns from SPY dataset
+            self.pii_keywords['spy_contexts'] = self.context_patterns
         
     def detect_pii_regex(self, text: str) -> List[Dict[str, Any]]:
         """Detect PII using regex patterns"""
@@ -564,6 +615,137 @@ class AdvancedPIIDetector:
                 
         return redacted_text
     
+    def detect_pii_spy_enhanced(self, text: str) -> List[Dict[str, Any]]:
+        """Enhanced PII detection using SPY dataset patterns"""
+        detected = []
+        
+        if not SPY_DATASET_AVAILABLE:
+            return detected
+            
+        try:
+            # Use SPY entity types for enhanced detection
+            spy_entities = self.enhanced_pii_entities if hasattr(self, 'enhanced_pii_entities') else []
+            context_patterns = self.context_patterns if hasattr(self, 'context_patterns') else []
+            
+            # Check for context patterns that indicate PII presence
+            text_lower = text.lower()
+            for pattern in context_patterns:
+                if pattern in text_lower:
+                    # Extract potential PII values near context patterns
+                    pattern_pos = text_lower.find(pattern)
+                    context_window = text[max(0, pattern_pos-30):pattern_pos+100]
+                    
+                    # Use advanced extraction for different entity types
+                    for entity_type in spy_entities:
+                        entity_candidates = self._extract_spy_entity_candidates(
+                            context_window, entity_type, pattern
+                        )
+                        detected.extend(entity_candidates)
+            
+            # Apply similarity-based detection using training corpus
+            if hasattr(self, 'training_corpus') and self.training_corpus:
+                similarity_candidates = self._detect_using_spy_similarity(text)
+                detected.extend(similarity_candidates)
+                
+        except Exception as e:
+            logger.warning(f"SPY enhanced detection error: {e}")
+            
+        return detected
+    
+    def _extract_spy_entity_candidates(self, context: str, entity_type: str, pattern: str) -> List[Dict[str, Any]]:
+        """Extract candidates for specific SPY entity types"""
+        candidates = []
+        
+        # Entity-specific extraction patterns
+        extraction_patterns = {
+            'FIRSTNAME': r'\b[A-Z][a-z]{2,15}\b',
+            'EMAIL': r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b',
+            'PHONE': r'\b[\+]?[\d\s\-\(\)]{8,20}\b',
+            'PHONEIMEI': r'\b\d{2}-\d{6}-\d{6}-\d\b',
+            'DOB': r'\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\b',
+            'SSN': r'\b\d{3}-\d{2}-\d{4}\b',
+            'CREDITCARDNUMBER': r'\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b',
+            'IPV4': r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
+            'IPV6': r'\b[a-fA-F0-9:]+\b',
+            'VEHICLEVIN': r'\b[A-HJ-NPR-Z0-9]{17}\b',
+            'ZIPCODE': r'\b\d{5}(?:-\d{4})?\b',
+            'AGE': r'\b\d{1,3}(?:\s+years?\s+old|\s+yr)?\b',
+            'PASSWORD': r'\b[A-Za-z0-9@#$%^&*]{8,}\b'
+        }
+        
+        if entity_type in extraction_patterns:
+            pattern_regex = extraction_patterns[entity_type]
+            matches = re.finditer(pattern_regex, context)
+            
+            for match in matches:
+                candidates.append({
+                    'type': f'spy_{entity_type.lower()}',
+                    'value': match.group(),
+                    'confidence': 0.75,
+                    'method': 'spy_enhanced',
+                    'entity_type': entity_type,
+                    'context_pattern': pattern,
+                    'context': context.strip()
+                })
+                
+        return candidates
+    
+    def _detect_using_spy_similarity(self, text: str) -> List[Dict[str, Any]]:
+        """Detect PII using similarity with SPY training corpus"""
+        detected = []
+        
+        try:
+            if not hasattr(self, 'training_vectors') or self.training_vectors is None:
+                return detected
+                
+            # Analyze sentences for similarity with training data
+            sentences = text.split('. ')
+            if len(sentences) > 0:
+                sentence_vectors = self.tfidf_vectorizer.transform(sentences)
+                similarities = cosine_similarity(sentence_vectors, self.training_vectors)
+                max_similarities = np.max(similarities, axis=1)
+                
+                for i, sentence in enumerate(sentences):
+                    if max_similarities[i] > 0.3:  # Higher threshold for SPY similarity
+                        # Extract potential PII from high-similarity sentences
+                        spy_candidates = self._extract_high_confidence_pii(
+                            sentence, max_similarities[i]
+                        )
+                        detected.extend(spy_candidates)
+                        
+        except Exception as e:
+            logger.warning(f"SPY similarity detection error: {e}")
+            
+        return detected
+    
+    def _extract_high_confidence_pii(self, sentence: str, similarity_score: float) -> List[Dict[str, Any]]:
+        """Extract high-confidence PII from sentences with high training similarity"""
+        candidates = []
+        words = sentence.split()
+        
+        for word in words:
+            if len(word) <= 2:
+                continue
+                
+            # Calculate word-level PII likelihood
+            pii_likelihood = self._calculate_word_pii_similarity(word)
+            combined_confidence = (similarity_score * 0.6) + (pii_likelihood * 0.4)
+            
+            if combined_confidence > 0.4:
+                pii_type = self._classify_pii_type_advanced(word, sentence)
+                
+                candidates.append({
+                    'type': f'spy_similarity_{pii_type}',
+                    'value': word,
+                    'confidence': min(combined_confidence, 0.85),
+                    'method': 'spy_similarity',
+                    'similarity_score': similarity_score,
+                    'pii_likelihood': pii_likelihood,
+                    'context': sentence
+                })
+                
+        return candidates
+
     def detect_pii_comprehensive(self, text: str) -> Dict[str, Any]:
         """Comprehensive PII detection using all available methods"""
         all_detected = []
@@ -601,6 +783,12 @@ class AdvancedPIIDetector:
             if tfidf_results:
                 all_detected.extend(tfidf_results)
                 detection_methods.append('tfidf_clustering')
+                
+        # 6. SPY dataset enhanced detection
+        spy_results = self.detect_pii_spy_enhanced(text)
+        if spy_results:
+            all_detected.extend(spy_results)
+            detection_methods.append('spy_enhanced')
         
         # Remove duplicates and calculate overall confidence
         unique_items = self._deduplicate_pii_items(all_detected)
@@ -643,7 +831,9 @@ class AdvancedPIIDetector:
             'spacy_ner': 0.9,
             'contextual': 0.7,
             'bert_clustering': 0.8,
-            'tfidf_clustering': 0.6
+            'tfidf_clustering': 0.6,
+            'spy_enhanced': 0.85,
+            'spy_similarity': 0.75
         }
         
         total_weighted_confidence = 0.0
