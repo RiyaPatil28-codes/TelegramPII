@@ -557,7 +557,7 @@ class ChatManager {
         warningBar.innerHTML = `
             <div class="pii-warning-content">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span>Sensitive information detected: ${piiItems.map(p => p.type).join(', ')}</span>
+                <span>Sensitive information detected</span>
                 <span class="pii-warning-note">Be careful sharing personal information in chats</span>
             </div>
         `;
