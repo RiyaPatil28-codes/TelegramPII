@@ -16,6 +16,10 @@ dependencies = [
     "openai>=1.99.6",
     "nltk>=3.9.1",
     "flask-pymongo>=3.0.1",
+    "seaborn>=0.13.2",
+    "bson>=0.5.10",
+    "pandas>=2.3.2",
+    "matplotlib>=3.10.6",
 ]
 
 [[tool.uv.index]]
