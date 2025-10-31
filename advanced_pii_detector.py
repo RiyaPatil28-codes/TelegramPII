@@ -244,7 +244,40 @@ class AdvancedPIIDetector:
             'routing_number': r'\b\d{9}\b',  # US routing numbers
             # Additional financial patterns
             'iban': r'\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}([A-Z0-9]?){0,16}\b',
-            'swift_code': r'\b[A-Z]{6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3})?\b'
+            'swift_code': r'\b[A-Z]{6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3})?\b',
+            # Comprehensive international postal/ZIP code patterns
+            'zipcode_us': r'\b\d{5}(?:-\d{4})?\b',  # US ZIP codes (90210 or 90210-1234)
+            'postcode_uk': r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b',  # UK postcodes (SW1A 1AA, W1T 4TJ)
+            'postcode_canada': r'\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b',  # Canadian postal codes (K1A 0B1)
+            'pincode_india': r'\b[1-9]\d{5}\b',  # Indian PIN codes (110001)
+            'postcode_australia': r'\b\d{4}\b',  # Australian postcodes (2000)
+            'postcode_germany': r'\b\d{5}\b',  # German postcodes (10115)
+            'postcode_france': r'\b\d{5}\b',  # French postal codes (75001)
+            'postcode_netherlands': r'\b\d{4}\s?[A-Z]{2}\b',  # Dutch postcodes (1012 JS)
+            'postcode_spain': r'\b\d{5}\b',  # Spanish postal codes (28001)
+            'postcode_italy': r'\b\d{5}\b',  # Italian postal codes (00184)
+            'postcode_japan': r'\b\d{3}-?\d{4}\b',  # Japanese postal codes (100-0001)
+            'postcode_china': r'\b\d{6}\b',  # Chinese postal codes (100000)
+            'postcode_brazil': r'\b\d{5}-?\d{3}\b',  # Brazilian CEP codes (01310-100)
+            'postcode_mexico': r'\b\d{5}\b',  # Mexican postal codes (01000)
+            'postcode_argentina': r'\b[A-Z]\d{4}[A-Z]{3}\b',  # Argentine postal codes (C1420ABC)
+            'postcode_switzerland': r'\b\d{4}\b',  # Swiss postal codes (8001)
+            'postcode_belgium': r'\b\d{4}\b',  # Belgian postal codes (1000)
+            'postcode_sweden': r'\b\d{3}\s?\d{2}\b',  # Swedish postal codes (111 22)
+            'postcode_norway': r'\b\d{4}\b',  # Norwegian postal codes (0150)
+            'postcode_denmark': r'\b\d{4}\b',  # Danish postal codes (1050)
+            'postcode_finland': r'\b\d{5}\b',  # Finnish postal codes (00100)
+            'postcode_poland': r'\b\d{2}-\d{3}\b',  # Polish postal codes (00-001)
+            'postcode_russia': r'\b\d{6}\b',  # Russian postal codes (101000)
+            'postcode_south_korea': r'\b\d{5}\b',  # South Korean postal codes (03051)
+            'postcode_singapore': r'\b\d{6}\b',  # Singapore postal codes (018956)
+            'postcode_malaysia': r'\b\d{5}\b',  # Malaysian postcodes (50000)
+            'postcode_thailand': r'\b\d{5}\b',  # Thai postal codes (10200)
+            'postcode_indonesia': r'\b\d{5}\b',  # Indonesian postal codes (10110)
+            'postcode_philippines': r'\b\d{4}\b',  # Philippine postal codes (1000)
+            'postcode_new_zealand': r'\b\d{4}\b',  # New Zealand postcodes (1010)
+            'postcode_south_africa': r'\b\d{4}\b',  # South African postal codes (0001)
+            'postcode_ireland': r'\b[A-Z]\d{2}\s?[A-Z0-9]{4}\b'  # Irish Eircode (D02 AF30)
         }
         
     def setup_pii_keywords(self):
@@ -273,7 +306,9 @@ class AdvancedPIIDetector:
             ],
             'location': [
                 'live in', 'stay in', 'residing', 'located at', 'city',
-                'state', 'country', 'locality', 'area', 'neighborhood'
+                'state', 'country', 'locality', 'area', 'neighborhood',
+                'zip code', 'zipcode', 'postal code', 'postcode', 'pincode',
+                'pin code', 'zip', 'postal'
             ]
         }
         
@@ -724,7 +759,9 @@ class AdvancedPIIDetector:
             'IPV4': r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
             'IPV6': r'\b[a-fA-F0-9:]+\b',
             'VEHICLEVIN': r'\b[A-HJ-NPR-Z0-9]{17}\b',
-            'ZIPCODE': r'\b\d{5}(?:-\d{4})?\b',
+            'ZIPCODE': r'\b\d{5}(?:-\d{4})?\b',  # US ZIP codes
+            'POSTCODE': r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b',  # UK postcodes
+            'PINCODE': r'\b[1-9]\d{5}\b',  # Indian PIN codes
             'AGE': r'\b\d{1,3}(?:\s+years?\s+old|\s+yr)?\b',
             'PASSWORD': r'\b[A-Za-z0-9@#$%^&*]{8,}\b'
         }

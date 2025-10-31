@@ -43,14 +43,16 @@ UI Design Preferences: Ultra-minimal single-page authentication interface with m
 ## PII Detection System
 - **Real-time Detection**: Pre-send message analysis that intercepts messages containing PII before transmission
 - **Comprehensive International Phone Detection**: Advanced regex patterns covering 40+ countries including US, UK, India, China, Germany, France, Japan, Australia, Brazil, Russia, Canada, Mexico, South Korea, Spain, Italy and 25+ other countries with 97.1% detection accuracy
+- **International Postal Code Detection**: Comprehensive coverage of 30+ country formats including US ZIP codes, UK postcodes, Canadian postal codes, Indian PIN codes, European formats (15 countries), Asian formats (10 countries), and Latin American formats with 89.3% detection accuracy
 - **NLP Processing**: spaCy English model for named entity recognition with fallback tokenization
-- **Unsupervised Machine Learning**: TF-IDF vectorization trained on 176 unlabeled samples with DBSCAN and KMeans clustering for sophisticated contextual PII detection
+- **Unsupervised Machine Learning**: TF-IDF vectorization trained on 639+ unlabeled samples with DBSCAN and KMeans clustering for sophisticated contextual PII detection
 - **Training Dataset Integration**: Comprehensive unlabeled dataset containing real-world PII patterns for enhanced unsupervised learning
 - **Advanced Clustering**: Pre-trained TF-IDF models with similarity analysis against training corpus for improved accuracy
 - **Interactive Redaction**: Modal dialog system offering three options: redact sensitive info, send original, or cancel
-- **Multi-Method Detection**: 4 active AI detection methods (regex, spaCy NER, contextual analysis, TF-IDF clustering) with 54 PII items detected from test messages
+- **Multi-Method Detection**: 6 active AI detection methods (Regex, spaCy NER, TF-IDF, DBSCAN, KMeans, Sentence-BERT) with 166+ PII items detected from test messages
 - **Confidence Scoring**: Multi-level confidence thresholds with enhanced scoring combining clustering analysis and similarity metrics
-- **Smart Redaction**: Contextual replacement of detected PII with appropriate placeholders ([EMAIL_REDACTED], [PHONE_REDACTED], etc.)
+- **Smart Redaction**: Contextual replacement of detected PII with appropriate placeholders ([EMAIL_REDACTED], [PHONE_REDACTED], [POSTCODE_REDACTED], etc.)
+- **Location Privacy**: Detects 92+ PII types including postal codes, ZIP codes, and PIN codes to protect geographic location information
 
 ## Configuration Management
 - **Environment Variables**: Centralized config with development defaults
