@@ -181,7 +181,10 @@ class PIIDetectorFrontend {
                     <h4 class="pii-section-title">Detected Sensitive Information:</h4>
                     ${simplifiedPII.map(pii => `
                         <div class="pii-item">
-                            <span class="pii-type">${this.formatPIIType(pii.type)}</span>
+                            <div class="pii-item-header">
+                                <span class="pii-type">${this.formatPIIType(pii.type)}</span>
+                                <span class="pii-badge">${this.getPIIPlaceholder(pii.type)}</span>
+                            </div>
                             <span class="pii-value">${pii.value}</span>
                         </div>
                     `).join('')}
@@ -447,9 +450,31 @@ class PIIDetectorFrontend {
             pan: 'PAN Number',
             name: 'Personal Name',
             location: 'Location',
-            ssn: 'Social Security Number'
+            ssn: 'Social Security Number',
+            zipcode: 'ZIP Code',
+            postcode: 'Postal Code',
+            pincode: 'PIN Code'
         };
         return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    getPIIPlaceholder(type) {
+        const placeholderMap = {
+            email: '[EMAIL_REDACTED]',
+            phone: '[PHONE_REDACTED]',
+            account: '[ACCOUNT_REDACTED]',
+            aadhar: '[AADHAR_REDACTED]',
+            passport: '[PASSPORT_REDACTED]',
+            creditCard: '[CARD_REDACTED]',
+            pan: '[PAN_REDACTED]',
+            name: '[NAME_REDACTED]',
+            location: '[LOCATION_REDACTED]',
+            ssn: '[SSN_REDACTED]',
+            zipcode: '[POSTAL_CODE_REDACTED]',
+            postcode: '[POSTAL_CODE_REDACTED]',
+            pincode: '[POSTAL_CODE_REDACTED]'
+        };
+        return placeholderMap[type] || '[REDACTED]';
     }
 
     // Send message to backend for comprehensive PII analysis

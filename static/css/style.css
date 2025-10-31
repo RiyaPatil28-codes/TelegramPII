@@ -2211,8 +2211,8 @@ a.auth-btn.secondary:hover {
 
 .pii-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
     padding: 12px 16px;
     background: white;
     border: 1px solid #ffb8a0;
@@ -2225,6 +2225,24 @@ a.auth-btn.secondary:hover {
 .pii-item:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
+}
+
+.pii-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.pii-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
 }
 
 .pii-type {
