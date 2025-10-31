@@ -238,10 +238,10 @@ class AdvancedPIIDetector:
             'pan': r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b',
             'ssn': r'\b\d{3}-\d{2}-\d{4}\b',
             'ip_address': r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
-            # Enhanced account number patterns
-            'bank_account': r'\b\d{8,17}\b',  # Standard bank account numbers
-            'account_number': r'\b(?:acc(?:ount)?[\s#]*:?[\s]*)?(\d{6,20})\b',
-            'routing_number': r'\b\d{9}\b',  # US routing numbers
+            # Enhanced account number patterns (require explicit account keyword to avoid false positives)
+            'bank_account': r'\b(?:bank\s+)?acc(?:ount)?[\s#]*:?[\s]*\d{8,17}\b',
+            'account_number': r'\b(?:acc(?:ount)?[\s#]*:?[\s]*)\d{6,20}\b',
+            'routing_number': r'\b(?:routing[\s#]*:?[\s]*)?\d{9}\b',  # US routing numbers
             # Additional financial patterns
             'iban': r'\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7}([A-Z0-9]?){0,16}\b',
             'swift_code': r'\b[A-Z]{6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3})?\b',
@@ -688,21 +688,83 @@ class AdvancedPIIDetector:
         """Redact detected PII from text"""
         redacted_text = text
         
-        # Sort PII items by position (if available) to avoid overlapping replacements
-        sorted_items = sorted(pii_items, key=lambda x: x.get('start_pos', 0), reverse=True)
+        # Priority order for deduplication when same value detected as multiple types
+        type_priority = {
+            'email': 100,
+            'ssn': 90,
+            'aadhar': 90,
+            'passport': 85,
+            'credit': 80,
+            'account': 80,
+            'zipcode': 70,
+            'postcode': 70,
+            'pincode': 70,
+            'postal': 70,
+            'phone': 60,
+            'location': 30,
+        }
+        
+        def get_priority(pii_type: str) -> int:
+            """Get priority for PII type"""
+            pii_type_lower = pii_type.lower()
+            for key, priority in type_priority.items():
+                if key in pii_type_lower:
+                    return priority
+            return 50  # Default priority
+        
+        # Deduplicate by value - keep highest priority/confidence detection
+        unique_items = {}
+        for item in pii_items:
+            value = item['value']
+            item_priority = get_priority(item['type'])
+            
+            if value not in unique_items:
+                unique_items[value] = item
+            else:
+                existing_priority = get_priority(unique_items[value]['type'])
+                existing_confidence = unique_items[value].get('confidence', 0)
+                item_confidence = item.get('confidence', 0)
+                
+                # Keep higher priority, or higher confidence if same priority
+                if (item_priority > existing_priority or 
+                    (item_priority == existing_priority and item_confidence > existing_confidence)):
+                    unique_items[value] = item
+        
+        # Sort by length (longest first) to avoid partial replacements
+        sorted_items = sorted(unique_items.values(), key=lambda x: len(x['value']), reverse=True)
+        
+        # Track what's been replaced
+        replaced_values = set()
         
         for item in sorted_items:
-            pii_type = item['type'].upper()
-            placeholder = f"[{pii_type}_REDACTED]"
+            value = item['value']
             
-            # Use position-based replacement if available
-            if 'start_pos' in item and 'end_pos' in item:
-                start = item['start_pos']
-                end = item['end_pos']
-                redacted_text = redacted_text[:start] + placeholder + redacted_text[end:]
+            # Skip if already replaced or is substring of replaced value
+            if value in replaced_values or any(value in rv for rv in replaced_values):
+                continue
+            
+            pii_type = item['type'].lower()
+            
+            # Generate appropriate placeholder based on PII type
+            if 'phone' in pii_type:
+                placeholder = '[PHONE_REDACTED]'
+            elif 'email' in pii_type:
+                placeholder = '[EMAIL_REDACTED]'
+            elif 'ssn' in pii_type or 'aadhar' in pii_type:
+                placeholder = '[ID_REDACTED]'
+            elif 'account' in pii_type or 'credit' in pii_type:
+                placeholder = '[ACCOUNT_REDACTED]'
+            elif any(keyword in pii_type for keyword in ['zipcode', 'postcode', 'pincode', 'postal']):
+                placeholder = '[POSTAL_CODE_REDACTED]'
+            elif 'passport' in pii_type:
+                placeholder = '[PASSPORT_REDACTED]'
             else:
-                # Fallback to string replacement
-                redacted_text = redacted_text.replace(item['value'], placeholder)
+                placeholder = f"[{pii_type.upper()}_REDACTED]"
+            
+            # Only replace if value still exists in text
+            if value in redacted_text:
+                redacted_text = redacted_text.replace(value, placeholder)
+                replaced_values.add(value)
                 
         return redacted_text
     

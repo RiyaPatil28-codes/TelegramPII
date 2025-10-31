@@ -75,6 +75,21 @@ class UnifiedPIIDetector:
                     'confidence': item['confidence']
                 })
                 seen_values.add(item['value'])
+            # Include postal codes, ZIP codes, and PIN codes
+            elif any(keyword in item_type for keyword in ['zipcode', 'postcode', 'pincode', 'postal', 'zip']):
+                # Determine the specific postal code type
+                if 'pincode' in item_type or 'pin' in item_type:
+                    simplified_type = 'pincode'
+                elif 'postcode' in item_type or 'post' in item_type:
+                    simplified_type = 'postcode'
+                else:
+                    simplified_type = 'zipcode'
+                priority_items.append({
+                    'type': simplified_type,
+                    'value': item['value'],
+                    'confidence': item['confidence']
+                })
+                seen_values.add(item['value'])
             # Skip all spy detections as they create noise
             # Include clear name detections (but not common words)
             elif ('name' in item_type and len(item['value']) > 3 and 
